@@ -1,0 +1,1618 @@
+import React, { useState, useEffect } from 'react';
+import { Tab, UserStats } from '../types';
+import { 
+  Gamepad2, 
+  Sparkles, 
+  Coins, 
+  HelpCircle, 
+  BookOpen, 
+  MapPin, 
+  HelpCircle as QuestionIcon, 
+  CheckCircle2, 
+  XCircle, 
+  RefreshCw, 
+  RotateCcw,
+  Volume2, 
+  VolumeX, 
+  Award, 
+  ChevronLeft, 
+  Search,
+  Check,
+  Compass,
+  ArrowRight,
+  Shield,
+  Zap,
+  Lock,
+  MessageSquare
+} from 'lucide-react';
+
+interface GamesTabProps {
+  stats: UserStats;
+  setStats: (stats: UserStats | ((prev: UserStats) => UserStats)) => void;
+  lang: 'en' | 'kn';
+  setLang: (lang: 'en' | 'kn') => void;
+  sfxOn: boolean;
+  setCurrentTab: (tab: Tab) => void;
+}
+
+interface GameDefinition {
+  id: string;
+  title: string;
+  titleKn: string;
+  description: string;
+  descriptionKn: string;
+  icon: React.ReactNode;
+  difficulty: 'Easy' | 'Medium' | 'Hard';
+  xpReward: number;
+  coinReward: number;
+}
+
+export default function GamesTab({
+  stats,
+  setStats,
+  lang,
+  setLang,
+  sfxOn,
+  setCurrentTab
+}: GamesTabProps) {
+
+  // --- AUDIO SYNTHESIZER ---
+  const playSfx = (type: 'correct' | 'wrong' | 'click' | 'victory' | 'match') => {
+    if (!sfxOn) return;
+    try {
+      const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'correct') {
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.22);
+      } else if (type === 'wrong') {
+        osc.frequency.setValueAtTime(220.00, audioCtx.currentTime); // A3
+        osc.frequency.setValueAtTime(146.83, audioCtx.currentTime + 0.08); // D3
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.25);
+      } else if (type === 'click') {
+        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.04);
+      } else if (type === 'match') {
+        osc.frequency.setValueAtTime(392.00, audioCtx.currentTime); // G4
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime + 0.08); // C5
+        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.2);
+      } else if (type === 'victory') {
+        osc.frequency.setValueAtTime(523.25, audioCtx.currentTime); // C5
+        osc.frequency.setValueAtTime(659.25, audioCtx.currentTime + 0.08); // E5
+        osc.frequency.setValueAtTime(783.99, audioCtx.currentTime + 0.16); // G5
+        osc.frequency.setValueAtTime(1046.50, audioCtx.currentTime + 0.24); // C6
+        gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.4);
+      }
+    } catch (e) {}
+  };
+
+  // State to manage which game is actively running
+  const [activeGameId, setActiveGameId] = useState<string | null>(null);
+
+  // General game session state
+  const [gameState, setGameState] = useState<any>({
+    score: 0,
+    currentStep: 0,
+    isCompleted: false,
+    earnedXp: 0,
+    earnedCoins: 0,
+    history: []
+  });
+
+  const gamesList: GameDefinition[] = [
+    {
+      id: 'char_find',
+      title: 'Character Finding',
+      titleKn: 'ಪಾತ್ರ ಹುಡುಕಾಟ',
+      description: 'Find the famous Biblical character using progressive clues and references.',
+      descriptionKn: 'ಸುಳಿವುಗಳನ್ನು ಆಧರಿಸಿ ಪ್ರಸಿದ್ಧ ಬೈಬಲ್ ಪಾತ್ರವನ್ನು ಗುರುತಿಸಿ.',
+      icon: <Search className="w-6 h-6 text-primary" />,
+      difficulty: 'Easy',
+      xpReward: 30,
+      coinReward: 15
+    },
+    {
+      id: 'word_match',
+      title: 'Word Matching',
+      titleKn: 'ಪದ ಹೊಂದಾಣಿಕೆ',
+      description: 'Match Biblical terms, structures, and events to their definitions.',
+      descriptionKn: 'ಬೈಬಲ್ ನಿಯಮಗಳು ಮತ್ತು ಸನ್ನಿವೇಶಗಳನ್ನು ಅವುಗಳ ಅರ್ಥಗಳಿಗೆ ಹೊಂದಿಸಿ.',
+      icon: <RefreshCw className="w-6 h-6 text-secondary" />,
+      difficulty: 'Medium',
+      xpReward: 40,
+      coinReward: 20
+    },
+    {
+      id: 'verse_scramble',
+      title: 'Verse Scramble',
+      titleKn: 'ವಚನ ಜೋಡಣೆ',
+      description: 'Arrange scrambled scripture words back into their famous inspiring sequence.',
+      descriptionKn: 'ಅಸ್ತವ್ಯಸ್ತಗೊಂಡಿರುವ ವಚನಗಳನ್ನು ಸರಿಯಾದ ಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿ.',
+      icon: <Compass className="w-6 h-6 text-amber-500" />,
+      difficulty: 'Medium',
+      xpReward: 40,
+      coinReward: 20
+    },
+    {
+      id: 'who_am_i',
+      title: 'Who Am I? (Riddles)',
+      titleKn: 'ನಾನು ಯಾರು? (ಒಗಟುಗಳು)',
+      description: 'Solve first-person scripture riddles. Test your critical deduction skill!',
+      descriptionKn: 'ರಹಸ್ಯಮಯ ಬೈಬಲ್ ಒಗಟುಗಳನ್ನು ಬಿಡಿಸಿ ನಿಮ್ಮ ಜ್ಞಾನ ಪರೀಕ್ಷಿಸಿ.',
+      icon: <HelpCircle className="w-6 h-6 text-purple-500" />,
+      difficulty: 'Medium',
+      xpReward: 45,
+      coinReward: 20
+    },
+    {
+      id: 'word_guess',
+      title: 'Word Guess (Candlelight)',
+      titleKn: 'ಪದ ಊಹೆ (ಕ್ಯಾಂಡಲ್ ಲೈಟ್)',
+      description: 'Guess the key biblical vocabulary letter-by-letter before your candles burn out!',
+      descriptionKn: 'ಕ್ಯಾಂಡಲ್ ಆರುವ ಮುನ್ನ ಬೈಬಲ್ ಪದದ ಅಕ್ಷರಗಳನ್ನು ಊಹಿಸಿ!',
+      icon: <Zap className="w-6 h-6 text-red-500 animate-pulse" />,
+      difficulty: 'Hard',
+      xpReward: 50,
+      coinReward: 25
+    },
+    {
+      id: 'true_false',
+      title: 'True or False Sprint',
+      titleKn: 'ಸರಿ ಅಥವಾ ತಪ್ಪು ವೇಗ',
+      description: 'A rapid-fire sprint to answer as many scripture statements as you can in 30 seconds.',
+      descriptionKn: '೩೦ ಸೆಕೆಂಡುಗಳಲ್ಲಿ ಎಷ್ಟು ಸರಿ/ತಪ್ಪು ಪ್ರಶ್ನೆಗಳಿಗೆ ಉತ್ತರಿಸಲು ಸಾಧ್ಯವೋ ಉತ್ತರಿಸಿ.',
+      icon: <Shield className="w-6 h-6 text-emerald-500" />,
+      difficulty: 'Easy',
+      xpReward: 35,
+      coinReward: 15
+    },
+    {
+      id: 'fill_blanks',
+      title: 'Fill in the Blanks',
+      titleKn: 'ಖಾಲಿ ಜಾಗ ತುಂಬಿ',
+      description: 'Identify the missing critical words inside central encouraging verses.',
+      descriptionKn: 'ಪ್ರಮುಖ ಬೈಬಲ್ ವಚನಗಳಲ್ಲಿ ಬಿಟ್ಟುಹೋದ ಪದಗಳನ್ನು ತುಂಬಿರಿ.',
+      icon: <BookOpen className="w-6 h-6 text-indigo-500" />,
+      difficulty: 'Easy',
+      xpReward: 30,
+      coinReward: 15
+    },
+    {
+      id: 'odd_one',
+      title: 'Odd One Out',
+      titleKn: 'ಗುಂಪಿಗೆ ಸೇರದ ಪದ',
+      description: 'Analyze four biblical books or characters and pinpoint the one that does not belong.',
+      descriptionKn: 'ನಾಲ್ಕು ಪದಗಳಲ್ಲಿ ಉಳಿದವುಗಳಿಗೆ ಹೊಂದಿಕೆಯಾಗದ ಪದವನ್ನು ಪತ್ತೆಹಚ್ಚಿ.',
+      icon: <XCircle className="w-6 h-6 text-orange-500" />,
+      difficulty: 'Medium',
+      xpReward: 35,
+      coinReward: 15
+    },
+    {
+      id: 'book_order',
+      title: 'Bible Book Order',
+      titleKn: 'ಪುಸ್ತಕಗಳ ಅನುಕ್ರಮ',
+      description: 'Drag or tap Biblical books to place them in correct canonical chronological sequence.',
+      descriptionKn: 'ಬೈಬಲ್ ಪುಸ್ತಕಗಳನ್ನು ಅವುಗಳ ನಿಖರವಾದ ಅನುಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿ.',
+      icon: <Award className="w-6 h-6 text-blue-500" />,
+      difficulty: 'Hard',
+      xpReward: 50,
+      coinReward: 25
+    },
+    {
+      id: 'map_landmarks',
+      title: 'Map Landmarks Quiz',
+      titleKn: 'ಭೂಪಟ ಹೆಗ್ಗುರುತುಗಳು',
+      description: 'Match key historical miracles and revelations to their ancient Middle Eastern geographies.',
+      descriptionKn: 'ಬೈಬಲ್ ಘಟನೆಗಳನ್ನು ಅವು ನಡೆದ ಐತಿಹಾಸಿಕ ಸ್ಥಳಗಳಿಗೆ ಹೊಂದಿಸಿ.',
+      icon: <MapPin className="w-6 h-6 text-rose-500" />,
+      difficulty: 'Medium',
+      xpReward: 40,
+      coinReward: 20
+    }
+  ];
+
+  // Trigger game rewards payout
+  const handleGameComplete = (earnedXp: number, earnedCoins: number, score: number) => {
+    playSfx('victory');
+    setGameState((prev: any) => ({
+      ...prev,
+      isCompleted: true,
+      earnedXp,
+      earnedCoins,
+      score
+    }));
+
+    setStats((prev) => {
+      const nextXp = prev.xp + earnedXp;
+      const nextLevelCalculated = Math.floor(nextXp / 500) + 1;
+      const nextLevel = Math.max(prev.level, nextLevelCalculated);
+      return {
+        ...prev,
+        coins: prev.coins + earnedCoins,
+        xp: nextXp,
+        level: nextLevel
+      };
+    });
+  };
+
+  const handleResetGameSession = () => {
+    playSfx('click');
+    setGameState({
+      score: 0,
+      currentStep: 0,
+      isCompleted: false,
+      earnedXp: 0,
+      earnedCoins: 0,
+      history: []
+    });
+    // Trigger subgame-specific state resets if necessary
+    setSubGameStates();
+  };
+
+  const handleBackToSelect = () => {
+    playSfx('click');
+    setActiveGameId(null);
+    setGameState({
+      score: 0,
+      currentStep: 0,
+      isCompleted: false,
+      earnedXp: 0,
+      earnedCoins: 0,
+      history: []
+    });
+  };
+
+  // --- SUB-GAME STATES DECLARATIONS ---
+  
+  // 1. Character Finding state
+  const charFindQuestions = [
+    {
+      target: "Joseph",
+      clues: [
+        "I was sold into slavery by my brothers for twenty pieces of silver.",
+        "I interpreted Pharaoh's dreams about seven years of abundance and seven years of famine.",
+        "God blessed me to become a ruler in Egypt, second only to Pharaoh."
+      ],
+      options: ["Joseph", "Moses", "David", "Daniel"]
+    },
+    {
+      target: "Samson",
+      clues: [
+        "I was dedicated to God as a Nazirite from my birth.",
+        "I slew a lion with my bare hands and carried away the city gates of Gaza.",
+        "My long hair was the source of my great strength, which Delilah betrayed."
+      ],
+      options: ["Gideon", "Samson", "Joshua", "Solomon"]
+    },
+    {
+      target: "Deborah",
+      clues: [
+        "I am the only female judge of pre-monarchic Israel in the Old Testament.",
+        "I sat under my palm tree between Ramah and Bethel to resolve disputes.",
+        "I summoned Barak to lead an army of 10,000 men against the Canaanites."
+      ],
+      options: ["Esther", "Ruth", "Deborah", "Mary Magdalene"]
+    }
+  ];
+  const [charCluesShown, setCharCluesShown] = useState<number>(1);
+  const [charFeedback, setCharFeedback] = useState<string | null>(null);
+
+  // 2. Word Matching state
+  const matchRounds = [
+    {
+      pairs: [
+        { term: "Manna", def: "Bread from heaven provided in the wilderness" },
+        { term: "Gethsemane", def: "Garden where Jesus prayed before His arrest" },
+        { term: "Golgotha", def: "The hill of crucifixion, meaning Place of Skull" },
+        { term: "Sinai", def: "Mountain where Moses received the Commandments" }
+      ]
+    },
+    {
+      pairs: [
+        { term: "Jordan River", def: "Waters parted by Joshua & where Jesus was baptized" },
+        { term: "Patmos", def: "Island where Apostle John received the Revelation" },
+        { term: "Jericho", def: "Ancient city whose walls tumbled down by faith" },
+        { term: "Bethlehem", def: "The humble birthplace of King David & Jesus Christ" }
+      ]
+    }
+  ];
+  const [selectedTerm, setSelectedTerm] = useState<string | null>(null);
+  const [matchedTerms, setMatchedTerms] = useState<string[]>([]);
+  const [matchWrong, setMatchWrong] = useState<boolean>(false);
+
+  // 3. Verse Scramble state
+  const scrambleVerses = [
+    {
+      full: "I can do all things through Christ who strengthens me",
+      words: ["Christ", "do", "I", "all", "things", "through", "who", "me", "strengthens", "can"],
+      correctOrder: ["I", "can", "do", "all", "things", "through", "Christ", "who", "strengthens", "me"]
+    },
+    {
+      full: "The Lord is my shepherd I shall not want",
+      words: ["is", "not", "shepherd", "The", "Lord", "I", "my", "shall", "want"],
+      correctOrder: ["The", "Lord", "is", "my", "shepherd", "I", "shall", "not", "want"]
+    }
+  ];
+  const [scrambleAnswer, setScrambleAnswer] = useState<string[]>([]);
+  const [scrambleFeedback, setScrambleFeedback] = useState<string | null>(null);
+
+  // 4. Who Am I Riddles state
+  const riddles = [
+    {
+      riddle: "I was a tax collector in Jericho. Since I was short, I climbed a sycamore-fig tree to catch a glimpse of Jesus. Who am I?",
+      answer: "Zacchaeus",
+      options: ["Matthew", "Zacchaeus", "Peter", "Luke"]
+    },
+    {
+      riddle: "I walked on water towards Jesus during a fierce lake storm, but started sinking when I looked at the wind and grew afraid. Who am I?",
+      answer: "Peter",
+      options: ["John", "Andrew", "Peter", "Thomas"]
+    },
+    {
+      riddle: "I was the mother of Isaac, giving birth to him in my extremely old age as a miraculous fulfillment of God's promise. Who am I?",
+      answer: "Sarah",
+      options: ["Rebekah", "Rachel", "Sarah", "Hannah"]
+    }
+  ];
+  const [riddleFeedback, setRiddleFeedback] = useState<string | null>(null);
+
+  // 5. Word Guess state
+  const guessWords = ["GOLIATH", "BABYLON", "COVENANT", "SOLOMON", "NAZARETH", "EPHESIANS"];
+  const [currentGuessWord, setCurrentGuessWord] = useState<string>("");
+  const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
+  const [livesLeft, setLivesLeft] = useState<number>(6);
+
+  // 6. True or False state
+  const tfQuestions = [
+    { q: "Moses led the Israelites across the Jordan River into the Promised Land.", a: false }, // Joshua did
+    { q: "The New Testament contains 27 books in total.", a: true },
+    { q: "Noah's Ark came to rest on Mount Ararat as the flood waters receded.", a: true },
+    { q: "The Apostle Paul was originally known as Saul of Tarsus.", a: true },
+    { q: "David was the very first king of the nation of Israel.", a: false }, // Saul was
+    { q: "Jesus turned water into wine at the wedding feast in Cana.", a: true },
+    { q: "Judas Iscariot was replaced by Matthias as one of the twelve apostles.", a: true },
+    { q: "Daniel was thrown into a fiery furnace with Shadrach and Meshach.", a: false } // He was thrown in lion's den, his friends in furnace
+  ];
+  const [tfIndex, setTfIndex] = useState<number>(0);
+  const [tfTimeLeft, setTfTimeLeft] = useState<number>(30);
+  const [tfStreak, setTfStreak] = useState<number>(0);
+
+  // 7. Fill in the Blanks state
+  const blanksQuestions = [
+    {
+      sentence: "In the beginning, God created the heavens and the _______.",
+      missing: "earth",
+      options: ["earth", "world", "universe", "seas"]
+    },
+    {
+      sentence: "The fear of the Lord is the beginning of _______.",
+      missing: "wisdom",
+      options: ["knowledge", "life", "wisdom", "righteousness"]
+    },
+    {
+      sentence: "Be strong and _______, do not be afraid or discouraged.",
+      missing: "courageous",
+      options: ["happy", "courageous", "patient", "faithful"]
+    }
+  ];
+  const [blanksFeedback, setBlanksFeedback] = useState<string | null>(null);
+
+  // 8. Odd One Out state
+  const oddOneQuestions = [
+    {
+      items: ["Matthew", "Mark", "Genesis", "Luke"],
+      odd: "Genesis",
+      reason: "Genesis is an Old Testament Torah book, while others are New Testament Gospels."
+    },
+    {
+      items: ["David", "Noah", "Saul", "Solomon"],
+      odd: "Noah",
+      reason: "Noah was a patriarch from the Genesis flood narrative, while others were crowned Kings of Israel."
+    },
+    {
+      items: ["Paul", "Peter", "Timothy", "Judas Iscariot"],
+      odd: "Judas Iscariot",
+      reason: "Judas betrayed Jesus and fell from apostle rank, while others served as faithful early church pillars."
+    }
+  ];
+  const [oddSelected, setOddSelected] = useState<string | null>(null);
+
+  // 9. Bible Book Order state
+  const bookOrderQuestions = [
+    {
+      initial: ["Numbers", "Genesis", "Exodus", "Leviticus"],
+      correct: ["Genesis", "Exodus", "Leviticus", "Numbers"]
+    },
+    {
+      initial: ["Romans", "Matthew", "Acts", "Revelation"],
+      correct: ["Matthew", "Acts", "Romans", "Revelation"]
+    }
+  ];
+  const [currentOrder, setCurrentOrder] = useState<string[]>([]);
+  const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
+
+  // 10. Map Landmarks state
+  const mapLandmarksQuestions = [
+    {
+      landmark: "Where did Jesus turn water into wine at a wedding feast?",
+      answer: "Cana",
+      options: ["Cana", "Nazareth", "Jerusalem", "Capernaum"]
+    },
+    {
+      landmark: "Where did the walls collapse after the Israelites marched around them for seven days?",
+      answer: "Jericho",
+      options: ["Jericho", "Babylon", "Nineveh", "Hebron"]
+    },
+    {
+      landmark: "Which river was Jesus baptized in by John the Baptist?",
+      answer: "Jordan River",
+      options: ["Jordan River", "Nile River", "Euphrates River", "Tigris River"]
+    }
+  ];
+  const [mapFeedback, setMapFeedback] = useState<string | null>(null);
+
+  // Sync sub game initializers
+  const setSubGameStates = () => {
+    // 1.
+    setCharCluesShown(1);
+    setCharFeedback(null);
+    // 2.
+    setSelectedTerm(null);
+    setMatchedTerms([]);
+    setMatchWrong(false);
+    // 3.
+    setScrambleAnswer([]);
+    setScrambleFeedback(null);
+    // 4.
+    setRiddleFeedback(null);
+    // 5.
+    const randomWord = guessWords[Math.floor(Math.random() * guessWords.length)];
+    setCurrentGuessWord(randomWord);
+    setGuessedLetters([]);
+    setLivesLeft(6);
+    // 6.
+    setTfIndex(0);
+    setTfTimeLeft(30);
+    setTfStreak(0);
+    // 7.
+    setBlanksFeedback(null);
+    // 8.
+    setOddSelected(null);
+    // 9.
+    setCurrentOrder([...bookOrderQuestions[0].initial]);
+    setOrderFeedback(null);
+    // 10.
+    setMapFeedback(null);
+  };
+
+  // Run on start
+  useEffect(() => {
+    setSubGameStates();
+  }, [activeGameId]);
+
+  // True/False countdown timer
+  useEffect(() => {
+    if (activeGameId !== 'true_false' || gameState.isCompleted) return;
+    if (tfTimeLeft <= 0) {
+      // Payout TF Sprint based on score
+      const bonusCoins = Math.min(25, gameState.score * 3);
+      const bonusXp = Math.min(45, gameState.score * 5);
+      handleGameComplete(bonusXp, bonusCoins, gameState.score);
+      return;
+    }
+    const timer = setInterval(() => {
+      setTfTimeLeft((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [tfTimeLeft, activeGameId, gameState.isCompleted]);
+
+
+  // --- SUB-GAME ACTIONS ---
+
+  // 1. Character Finding action
+  const handleCharAnswer = (choice: string) => {
+    if (charFeedback) return;
+    const isCorrect = choice === charFindQuestions[gameState.currentStep].target;
+    if (isCorrect) {
+      playSfx('correct');
+      setCharFeedback("Correct! Splendid job.");
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+      setCharFeedback(`Wrong! The correct answer was ${charFindQuestions[gameState.currentStep].target}.`);
+    }
+  };
+
+  const handleNextChar = () => {
+    setCharFeedback(null);
+    setCharCluesShown(1);
+    if (gameState.currentStep < charFindQuestions.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      // Payout
+      const finalScore = gameState.score + (charFeedback?.includes("Correct") ? 1 : 0);
+      const gameDef = gamesList.find(g => g.id === 'char_find')!;
+      const rewardXp = Math.floor((gameState.score / charFindQuestions.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((gameState.score / charFindQuestions.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(10, rewardXp), Math.max(5, rewardCoins), gameState.score);
+    }
+  };
+
+  // 2. Word Matching Action
+  const handleSelectMatchingTerm = (term: string) => {
+    if (matchedTerms.includes(term)) return;
+    playSfx('click');
+    setSelectedTerm(term);
+  };
+
+  const handleSelectMatchingDef = (def: string) => {
+    if (!selectedTerm) return;
+    const currentRoundPairs = matchRounds[gameState.currentStep].pairs;
+    const pair = currentRoundPairs.find(p => p.term === selectedTerm);
+    
+    if (pair && pair.def === def) {
+      playSfx('match');
+      const nextMatched = [...matchedTerms, selectedTerm];
+      setMatchedTerms(nextMatched);
+      setSelectedTerm(null);
+
+      // If all 4 matched
+      if (nextMatched.length === 4) {
+        if (gameState.currentStep < matchRounds.length - 1) {
+          setTimeout(() => {
+            setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1, score: prev.score + 1 }));
+            setMatchedTerms([]);
+          }, 800);
+        } else {
+          setTimeout(() => {
+            const finalScore = gameState.score + 1;
+            const gameDef = gamesList.find(g => g.id === 'word_match')!;
+            handleGameComplete(gameDef.xpReward, gameDef.coinReward, finalScore);
+          }, 800);
+        }
+      }
+    } else {
+      playSfx('wrong');
+      setMatchWrong(true);
+      setTimeout(() => {
+        setMatchWrong(false);
+        setSelectedTerm(null);
+      }, 600);
+    }
+  };
+
+  // 3. Verse Scramble Action
+  const handleScrambleWordTap = (word: string) => {
+    playSfx('click');
+    setScrambleAnswer((prev) => [...prev, word]);
+  };
+
+  const handleScrambleWordRemove = (index: number) => {
+    playSfx('click');
+    setScrambleAnswer((prev) => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handleConfirmScramble = () => {
+    const currentQ = scrambleVerses[gameState.currentStep];
+    const userString = scrambleAnswer.join(" ");
+    const correctString = currentQ.correctOrder.join(" ");
+
+    if (userString === correctString) {
+      playSfx('correct');
+      setScrambleFeedback("Correct! You have beautifully assembled the scripture.");
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+      setScrambleFeedback("Not quite correct. Try rearranging the words differently.");
+    }
+  };
+
+  const handleNextScramble = () => {
+    setScrambleFeedback(null);
+    setScrambleAnswer([]);
+    if (gameState.currentStep < scrambleVerses.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      const finalScore = gameState.score;
+      const gameDef = gamesList.find(g => g.id === 'verse_scramble')!;
+      const rewardXp = Math.floor((finalScore / scrambleVerses.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((finalScore / scrambleVerses.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(15, rewardXp), Math.max(8, rewardCoins), finalScore);
+    }
+  };
+
+  // 4. Who Am I Riddles action
+  const handleRiddleAnswer = (choice: string) => {
+    if (riddleFeedback) return;
+    const isCorrect = choice === riddles[gameState.currentStep].answer;
+    if (isCorrect) {
+      playSfx('correct');
+      setRiddleFeedback("Correct! You figured out who it was!");
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+      setRiddleFeedback(`Incorrect! This was ${riddles[gameState.currentStep].answer}.`);
+    }
+  };
+
+  const handleNextRiddle = () => {
+    setRiddleFeedback(null);
+    if (gameState.currentStep < riddles.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      const finalScore = gameState.score;
+      const gameDef = gamesList.find(g => g.id === 'who_am_i')!;
+      const rewardXp = Math.floor((finalScore / riddles.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((finalScore / riddles.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(15, rewardXp), Math.max(8, rewardCoins), finalScore);
+    }
+  };
+
+  // 5. Word Guess action
+  const handleGuessLetter = (letter: string) => {
+    if (guessedLetters.includes(letter) || livesLeft <= 0 || gameState.isCompleted) return;
+    
+    playSfx('click');
+    const nextGuessed = [...guessedLetters, letter];
+    setGuessedLetters(nextGuessed);
+
+    if (!currentGuessWord.includes(letter)) {
+      const nextLives = livesLeft - 1;
+      setLivesLeft(nextLives);
+      playSfx('wrong');
+      if (nextLives <= 0) {
+        // Lost
+        const gameDef = gamesList.find(g => g.id === 'word_guess')!;
+        handleGameComplete(10, 5, 0);
+      }
+    } else {
+      // Check if word solved
+      const isWordSolved = currentGuessWord.split("").every(char => nextGuessed.includes(char));
+      if (isWordSolved) {
+        const gameDef = gamesList.find(g => g.id === 'word_guess')!;
+        handleGameComplete(gameDef.xpReward, gameDef.coinReward, 1);
+      }
+    }
+  };
+
+  // 6. True or False action
+  const handleTfAnswer = (userAns: boolean) => {
+    const currentQ = tfQuestions[tfIndex];
+    if (currentQ.a === userAns) {
+      playSfx('correct');
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+      setTfStreak((prev) => prev + 1);
+    } else {
+      playSfx('wrong');
+      setTfStreak(0);
+    }
+
+    if (tfIndex < tfQuestions.length - 1) {
+      setTfIndex((prev) => prev + 1);
+    } else {
+      // Completed early
+      const gameDef = gamesList.find(g => g.id === 'true_false')!;
+      const rewardXp = Math.floor((gameState.score / tfQuestions.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((gameState.score / tfQuestions.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(15, rewardXp), Math.max(5, rewardCoins), gameState.score);
+    }
+  };
+
+  // 7. Fill in the Blanks action
+  const handleBlanksAnswer = (choice: string) => {
+    if (blanksFeedback) return;
+    const isCorrect = choice === blanksQuestions[gameState.currentStep].missing;
+    if (isCorrect) {
+      playSfx('correct');
+      setBlanksFeedback("Superb! Correct word choice.");
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+      setBlanksFeedback(`Incorrect. The correct word is: ${blanksQuestions[gameState.currentStep].missing}`);
+    }
+  };
+
+  const handleNextBlanks = () => {
+    setBlanksFeedback(null);
+    if (gameState.currentStep < blanksQuestions.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      const finalScore = gameState.score;
+      const gameDef = gamesList.find(g => g.id === 'fill_blanks')!;
+      const rewardXp = Math.floor((finalScore / blanksQuestions.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((finalScore / blanksQuestions.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(15, rewardXp), Math.max(5, rewardCoins), finalScore);
+    }
+  };
+
+  // 8. Odd One Out action
+  const handleOddSelect = (item: string) => {
+    if (oddSelected) return;
+    const currentQ = oddOneQuestions[gameState.currentStep];
+    setOddSelected(item);
+    if (item === currentQ.odd) {
+      playSfx('correct');
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+    }
+  };
+
+  const handleNextOdd = () => {
+    setOddSelected(null);
+    if (gameState.currentStep < oddOneQuestions.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      const finalScore = gameState.score;
+      const gameDef = gamesList.find(g => g.id === 'odd_one')!;
+      const rewardXp = Math.floor((finalScore / oddOneQuestions.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((finalScore / oddOneQuestions.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(15, rewardXp), Math.max(5, rewardCoins), finalScore);
+    }
+  };
+
+  // 9. Bible Book Order action
+  const handleMoveOrder = (index: number, direction: 'up' | 'down') => {
+    playSfx('click');
+    const newArr = [...currentOrder];
+    if (direction === 'up' && index > 0) {
+      const temp = newArr[index];
+      newArr[index] = newArr[index - 1];
+      newArr[index - 1] = temp;
+    } else if (direction === 'down' && index < newArr.length - 1) {
+      const temp = newArr[index];
+      newArr[index] = newArr[index + 1];
+      newArr[index + 1] = temp;
+    }
+    setCurrentOrder(newArr);
+  };
+
+  const handleVerifyOrder = () => {
+    const correctArr = bookOrderQuestions[gameState.currentStep].correct;
+    const isCorrect = currentOrder.every((val, idx) => val === correctArr[idx]);
+    if (isCorrect) {
+      playSfx('correct');
+      setOrderFeedback("Exquisite! You ordered the books in correct sequence.");
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+      setOrderFeedback(`Incorrect order. The actual sequence is: ${correctArr.join(" → ")}`);
+    }
+  };
+
+  const handleNextOrder = () => {
+    setOrderFeedback(null);
+    if (gameState.currentStep < bookOrderQuestions.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setCurrentOrder([...bookOrderQuestions[gameState.currentStep + 1].initial]);
+    } else {
+      const finalScore = gameState.score;
+      const gameDef = gamesList.find(g => g.id === 'book_order')!;
+      const rewardXp = Math.floor((finalScore / bookOrderQuestions.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((finalScore / bookOrderQuestions.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(20, rewardXp), Math.max(10, rewardCoins), finalScore);
+    }
+  };
+
+  // 10. Map Landmarks action
+  const handleMapAnswer = (choice: string) => {
+    if (mapFeedback) return;
+    const isCorrect = choice === mapLandmarksQuestions[gameState.currentStep].answer;
+    if (isCorrect) {
+      playSfx('correct');
+      setMapFeedback("A perfect geographical match! Keep it up.");
+      setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
+    } else {
+      playSfx('wrong');
+      setMapFeedback(`Incorrect. That landmark historical event belongs in: ${mapLandmarksQuestions[gameState.currentStep].answer}`);
+    }
+  };
+
+  const handleNextMap = () => {
+    setMapFeedback(null);
+    if (gameState.currentStep < mapLandmarksQuestions.length - 1) {
+      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+    } else {
+      const finalScore = gameState.score;
+      const gameDef = gamesList.find(g => g.id === 'map_landmarks')!;
+      const rewardXp = Math.floor((finalScore / mapLandmarksQuestions.length) * gameDef.xpReward);
+      const rewardCoins = Math.floor((finalScore / mapLandmarksQuestions.length) * gameDef.coinReward);
+      handleGameComplete(Math.max(15, rewardXp), Math.max(5, rewardCoins), finalScore);
+    }
+  };
+
+
+  // --- MAIN RENDER LOGIC ---
+
+  return (
+    <div className="w-full max-w-5xl mx-auto flex flex-col gap-6 pb-16 px-4 animate-fade-in text-left">
+      
+      {/* 1. Header Banner */}
+      {!activeGameId && (
+        <div className="bg-primary/5 rounded-3xl p-8 border border-primary/10 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2 text-primary">
+              <Gamepad2 className="w-5 h-5 animate-bounce" />
+              <span className="text-xs font-bold uppercase tracking-wider">Bible Interactive Games Arcade</span>
+            </div>
+            <h1 className="font-serif text-3xl font-bold text-primary tracking-tight">
+              {lang === 'en' ? 'Arcade Quest Rooms' : 'ಆರ್ಕೇಡ್ ಕ್ವೆಸ್ಟ್ ಕೊಠಡಿಗಳು'}
+            </h1>
+            <p className="text-xs md:text-sm text-on-surface-variant font-medium max-w-xl">
+              Immerse yourself in ten highly specialized game variations designed to drill scripture knowledge. Gain Gold, elevate your level, and expand your character!
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4 bg-white px-5 py-3 rounded-2xl border border-outline-variant/30 shadow-sm">
+            <Sparkles className="w-5 h-5 text-secondary animate-pulse" />
+            <div>
+              <p className="text-[10px] text-outline font-bold uppercase">Character Rank</p>
+              <p className="font-serif text-xs font-bold text-primary">Lvl {stats.level} Quest Master</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. GRID SELECTION VIEW OF 10 GAME TYPES */}
+      {!activeGameId && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {gamesList.map((game, idx) => {
+            const diffColor = 
+              game.difficulty === 'Easy' ? 'bg-emerald-100 text-emerald-800 border-emerald-200' :
+              game.difficulty === 'Medium' ? 'bg-amber-100 text-amber-800 border-amber-200' :
+              'bg-red-100 text-red-800 border-red-200';
+
+            return (
+              <div 
+                key={game.id}
+                className="group relative bg-white rounded-3xl p-6 border-2 border-slate-100 hover:border-primary/20 shadow-sm hover:shadow-lg transition-all flex flex-col justify-between"
+              >
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="p-3 rounded-2xl bg-primary/5 group-hover:bg-primary/10 transition-colors">
+                      {game.icon}
+                    </div>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${diffColor}`}>
+                      {game.difficulty}
+                    </span>
+                  </div>
+
+                  <h3 className="font-serif text-lg font-bold text-primary group-hover:text-secondary transition-colors">
+                    {lang === 'en' ? game.title : game.titleKn}
+                  </h3>
+
+                  <p className="text-xs text-slate-500 font-semibold mt-2 leading-relaxed">
+                    {lang === 'en' ? game.description : game.descriptionKn}
+                  </p>
+
+                  <div className="flex items-center gap-3 mt-4 py-2 border-t border-slate-50 text-[10px] font-bold text-slate-400">
+                    <span className="flex items-center gap-1 text-secondary">
+                      <Sparkles className="w-3.5 h-3.5 fill-secondary/20" />
+                      +{game.xpReward} XP
+                    </span>
+                    <span className="flex items-center gap-1 text-amber-500">
+                      <Coins className="w-3.5 h-3.5 fill-amber-500/10" />
+                      +{game.coinReward} Gold
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mt-6">
+                  <button
+                    onClick={() => { playSfx('click'); setActiveGameId(game.id); }}
+                    className="w-full py-2.5 bg-primary hover:bg-primary/95 text-white rounded-xl font-bold text-xs shadow hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <span>Play Game {idx + 1}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+
+      {/* 3. CORE ACTIVE GAME VIEWPORT */}
+      {activeGameId && (
+        <div className="w-full flex flex-col gap-6 animate-fade-in">
+          
+          {/* Active game sub header dashboard */}
+          <div className="bg-white rounded-2xl p-4 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={handleBackToSelect}
+                className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-500 hover:text-primary transition-colors cursor-pointer"
+                title="Return to Game Selection Rooms"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <div>
+                <h2 className="font-serif text-xl font-bold text-primary">
+                  {gamesList.find(g => g.id === activeGameId)?.title}
+                </h2>
+                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  Arcade Arena Room
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                onClick={handleResetGameSession}
+                className="flex items-center gap-1.5 px-4 py-1.5 border border-slate-200 hover:border-primary/40 text-xs font-bold text-slate-500 hover:text-primary rounded-full bg-white transition-all cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Restart Session
+              </button>
+              <button
+                onClick={handleBackToSelect}
+                className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-600 rounded-full transition-all cursor-pointer"
+              >
+                Other Game Rooms
+              </button>
+            </div>
+          </div>
+
+
+          {/* 4. GAME COMPLETION SUMMARY SCREEN (INTEGRATED) */}
+          {gameState.isCompleted && (
+            <div className="bg-white rounded-[32px] p-8 text-center border-2 border-primary/10 shadow-xl max-w-xl mx-auto w-full animate-fade-in">
+              <div className="w-16 h-16 bg-amber-50 rounded-full border border-amber-200 flex items-center justify-center text-amber-500 mx-auto mb-4 animate-bounce">
+                <Award className="w-8 h-8 fill-amber-100" />
+              </div>
+              <h2 className="font-serif text-2xl font-bold text-primary">Game Finished!</h2>
+              <p className="text-xs text-slate-400 font-semibold mt-1">Excellent performance in the Bible Arcade!</p>
+              
+              <div className="grid grid-cols-2 gap-4 my-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="text-center">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">XP Awarded</p>
+                  <p className="text-lg font-bold text-secondary">+{gameState.earnedXp} XP</p>
+                </div>
+                <div className="text-center border-l border-slate-200">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">Coins Earned</p>
+                  <p className="text-lg font-bold text-amber-500">+{gameState.earnedCoins} Gold</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                <button 
+                  onClick={handleResetGameSession}
+                  className="w-full sm:w-auto px-6 py-2.5 bg-slate-150 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  Play Again
+                </button>
+                <button 
+                  onClick={handleBackToSelect}
+                  className="w-full sm:w-auto px-8 py-2.5 bg-primary hover:bg-primary/90 text-white font-bold text-xs rounded-xl shadow cursor-pointer"
+                >
+                  Select Other Game Rooms
+                </button>
+              </div>
+            </div>
+          )}
+
+
+          {/* 5. INDIVIDUAL RENDERS FOR EACH OF THE 10 GAME MODES */}
+          {!gameState.isCompleted && (
+            <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-md">
+              
+              {/* GAME 1: Character Finding */}
+              {activeGameId === 'char_find' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">CHAR FIND — STEP {gameState.currentStep + 1} OF {charFindQuestions.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <div className="bg-primary/5 rounded-2xl p-6 space-y-4">
+                    <p className="text-xs font-bold text-primary uppercase">Read Clues Carefully:</p>
+                    <ul className="space-y-3">
+                      {charFindQuestions[gameState.currentStep].clues.slice(0, charCluesShown).map((clue, idx) => (
+                        <li key={idx} className="text-sm font-semibold text-slate-700 bg-white p-3 rounded-xl border border-slate-100 animate-fade-in flex items-start gap-2">
+                          <span className="text-primary font-bold">Clue {idx + 1}:</span>
+                          <span>{clue}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    {charCluesShown < 3 && !charFeedback && (
+                      <button 
+                        onClick={() => { playSfx('click'); setCharCluesShown(prev => prev + 1); }}
+                        className="text-xs text-primary font-bold hover:underline cursor-pointer"
+                      >
+                        + Reveal Next Clue
+                      </button>
+                    )}
+                  </div>
+
+                  {!charFeedback ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {charFindQuestions[gameState.currentStep].options.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleCharAnswer(opt)}
+                          className="p-4 bg-slate-50 hover:bg-primary/5 border border-slate-200 hover:border-primary/40 rounded-xl text-sm font-bold text-slate-700 transition-all text-left cursor-pointer"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 ${
+                        charFeedback.includes("Correct") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                      }`}>
+                        {charFeedback.includes("Correct") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {charFeedback}
+                      </div>
+
+                      <button 
+                        onClick={handleNextChar}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Step</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+              {/* GAME 2: Word Matching */}
+              {activeGameId === 'word_match' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">WORD MATCH — ROUND {gameState.currentStep + 1} OF {matchRounds.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Streak: {matchedTerms.length}/4 matched</span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 font-semibold">
+                    Select a term on the left, then click its corresponding definition on the right!
+                  </p>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    {/* Left Term Column */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Terms</h4>
+                      {matchRounds[gameState.currentStep].pairs.map((pair, idx) => {
+                        const isMatched = matchedTerms.includes(pair.term);
+                        const isSelected = selectedTerm === pair.term;
+
+                        let style = "bg-slate-50 border-slate-200 hover:bg-slate-100";
+                        if (isMatched) style = "bg-emerald-100 border-emerald-300 text-emerald-900 pointer-events-none";
+                        else if (isSelected) style = "bg-primary/10 border-primary text-primary";
+
+                        return (
+                          <button
+                            key={idx}
+                            onClick={() => handleSelectMatchingTerm(pair.term)}
+                            className={`w-full p-3 text-sm font-bold border rounded-xl text-left transition-all ${style} ${
+                              matchWrong && isSelected ? 'shake-animation border-red-500 text-red-700 bg-red-50' : ''
+                            }`}
+                          >
+                            {pair.term}
+                            {isMatched && <span className="float-right text-emerald-600">✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* Right Definitions Column */}
+                    <div className="space-y-3">
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Definitions</h4>
+                      {/* Jumbled render list of definitions */}
+                      {[...matchRounds[gameState.currentStep].pairs]
+                        .sort((a, b) => a.def.localeCompare(b.def))
+                        .map((pair, idx) => {
+                          const isMatched = matchedTerms.includes(pair.term);
+
+                          let style = "bg-slate-50 border-slate-200 hover:bg-slate-100";
+                          if (isMatched) style = "bg-emerald-100 border-emerald-300 text-emerald-900 pointer-events-none";
+
+                          return (
+                            <button
+                              key={idx}
+                              onClick={() => handleSelectMatchingDef(pair.def)}
+                              disabled={!selectedTerm || isMatched}
+                              className={`w-full p-3 text-xs font-semibold border rounded-xl text-left transition-all ${style} ${
+                                !selectedTerm && !isMatched ? 'opacity-50 cursor-not-allowed' : ''
+                              }`}
+                            >
+                              {pair.def}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+              {/* GAME 3: Verse Scramble */}
+              {activeGameId === 'verse_scramble' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">VERSE SCRAMBLE — ROUND {gameState.currentStep + 1} OF {scrambleVerses.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 font-semibold">
+                    Reorder the jumbled words of the scripture in correct canonical sequence:
+                  </p>
+
+                  {/* Assembled Area */}
+                  <div className="p-5 border-2 border-dashed border-slate-200 rounded-2xl min-h-[80px] bg-slate-50 flex flex-wrap gap-2 items-center">
+                    {scrambleAnswer.length === 0 ? (
+                      <span className="text-xs text-slate-400 font-bold">Click words below to assemble...</span>
+                    ) : (
+                      scrambleAnswer.map((word, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleScrambleWordRemove(idx)}
+                          className="px-3 py-1.5 bg-primary text-white text-xs font-bold rounded-lg hover:bg-red-500 transition-colors cursor-pointer"
+                        >
+                          {word} ×
+                        </button>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Word Options */}
+                  <div className="space-y-3">
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Word Bank</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {scrambleVerses[gameState.currentStep].words
+                        .filter(w => !scrambleAnswer.includes(w))
+                        .map((word, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleScrambleWordTap(word)}
+                            className="px-4 py-2 bg-slate-50 border border-slate-200 hover:border-primary/30 rounded-xl text-xs font-semibold text-slate-700 hover:text-primary transition-all cursor-pointer"
+                          >
+                            {word}
+                          </button>
+                        ))}
+                    </div>
+                  </div>
+
+                  {!scrambleFeedback ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setScrambleAnswer([])}
+                        className="px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-colors"
+                      >
+                        Reset Sequence
+                      </button>
+                      <button
+                        onClick={handleConfirmScramble}
+                        disabled={scrambleAnswer.length < scrambleVerses[gameState.currentStep].words.length}
+                        className="px-8 py-2.5 bg-primary text-white font-bold text-xs rounded-xl disabled:opacity-50"
+                      >
+                        Verify Sequence
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                        scrambleFeedback.includes("Correct") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                      }`}>
+                        {scrambleFeedback.includes("Correct") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {scrambleFeedback}
+                      </div>
+
+                      <button 
+                        onClick={handleNextScramble}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Scripture</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+              {/* GAME 4: Who Am I Riddles */}
+              {activeGameId === 'who_am_i' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">WHO AM I — QUESTION {gameState.currentStep + 1} OF {riddles.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <div className="bg-purple-50/40 border border-purple-100 rounded-2xl p-6 relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
+                      <MessageSquare className="w-32 h-32 text-purple-900" />
+                    </div>
+                    <p className="font-serif text-sm md:text-base text-slate-800 leading-relaxed italic">
+                      "{riddles[gameState.currentStep].riddle}"
+                    </p>
+                  </div>
+
+                  {!riddleFeedback ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {riddles[gameState.currentStep].options.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleRiddleAnswer(opt)}
+                          className="p-4 bg-slate-50 hover:bg-purple-50 hover:text-purple-900 border border-slate-200 hover:border-purple-300 rounded-xl text-sm font-bold text-slate-700 transition-all text-left cursor-pointer"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 ${
+                        riddleFeedback.includes("Correct") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                      }`}>
+                        {riddleFeedback.includes("Correct") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {riddleFeedback}
+                      </div>
+
+                      <button 
+                        onClick={handleNextRiddle}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Riddle</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+              {/* GAME 5: Word Guess */}
+              {activeGameId === 'word_guess' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">WORD GUESS ARENA — HARD LEVEL</span>
+                    <span className="text-xs font-bold text-red-500 flex items-center gap-1">
+                      🕯️ {livesLeft} candles remaining
+                    </span>
+                  </div>
+
+                  {/* Word Reveal Display */}
+                  <div className="flex justify-center gap-3 py-6">
+                    {currentGuessWord.split("").map((char, idx) => {
+                      const revealed = guessedLetters.includes(char);
+                      return (
+                        <div 
+                          key={idx}
+                          className="w-10 h-12 md:w-12 md:h-14 border-b-4 border-primary flex items-center justify-center text-xl md:text-2xl font-bold text-slate-800 bg-slate-50 rounded-t-lg shadow-sm"
+                        >
+                          {revealed ? char : ""}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Virtual Keyboard */}
+                  <div className="space-y-4">
+                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
+                      Tap Letters to Guess the Biblical Term
+                    </p>
+                    <div className="flex flex-wrap justify-center gap-2 max-w-xl mx-auto">
+                      {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => {
+                        const isGuessed = guessedLetters.includes(letter);
+                        const isCorrect = currentGuessWord.includes(letter);
+
+                        let style = "bg-slate-50 text-slate-800 hover:bg-slate-150 border border-slate-200 hover:border-slate-300";
+                        if (isGuessed) {
+                          style = isCorrect 
+                            ? "bg-emerald-500 text-white pointer-events-none"
+                            : "bg-red-500 text-white pointer-events-none opacity-40";
+                        }
+
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => handleGuessLetter(letter)}
+                            disabled={isGuessed}
+                            className={`w-9 h-9 md:w-10 md:h-10 text-xs font-extrabold rounded-lg flex items-center justify-center transition-all cursor-pointer ${style}`}
+                          >
+                            {letter}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+
+              {/* GAME 6: True or False Sprint */}
+              {activeGameId === 'true_false' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">TRUE OR FALSE SPRINT — QUESTION {tfIndex + 1}</span>
+                    <div className="flex items-center gap-3 text-xs font-bold">
+                      <span className="text-secondary">🔥 Streak: {tfStreak}</span>
+                      <span className="text-red-500 animate-pulse">⏰ {tfTimeLeft}s remaining</span>
+                    </div>
+                  </div>
+
+                  <div className="bg-slate-50 border border-slate-150 rounded-2xl p-6 text-center">
+                    <p className="font-serif text-lg text-slate-800 font-semibold max-w-xl mx-auto">
+                      "{tfQuestions[tfIndex].q}"
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto pt-2">
+                    <button
+                      onClick={() => handleTfAnswer(true)}
+                      className="py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-serif font-extrabold rounded-xl shadow cursor-pointer text-sm"
+                    >
+                      True
+                    </button>
+                    <button
+                      onClick={() => handleTfAnswer(false)}
+                      className="py-4 bg-red-600 hover:bg-red-700 text-white font-serif font-extrabold rounded-xl shadow cursor-pointer text-sm"
+                    >
+                      False
+                    </button>
+                  </div>
+                </div>
+              )}
+
+
+              {/* GAME 7: Fill in the Blanks */}
+              {activeGameId === 'fill_blanks' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">FILL IN BLANKS — STEP {gameState.currentStep + 1} OF {blanksQuestions.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <div className="bg-indigo-50/20 border border-indigo-100 rounded-2xl p-6">
+                    <p className="font-serif text-base text-slate-800 leading-relaxed text-center">
+                      "{blanksQuestions[gameState.currentStep].sentence}"
+                    </p>
+                  </div>
+
+                  {!blanksFeedback ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {blanksQuestions[gameState.currentStep].options.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleBlanksAnswer(opt)}
+                          className="p-4 bg-slate-50 hover:bg-indigo-50 hover:text-indigo-900 border border-slate-200 hover:border-indigo-300 rounded-xl text-sm font-bold text-slate-700 transition-all text-left cursor-pointer"
+                        >
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                        blanksFeedback.includes("Superb") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                      }`}>
+                        {blanksFeedback.includes("Superb") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {blanksFeedback}
+                      </div>
+
+                      <button 
+                        onClick={handleNextBlanks}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Step</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+              {/* GAME 8: Odd One Out */}
+              {activeGameId === 'odd_one' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">ODD ONE OUT — STEP {gameState.currentStep + 1} OF {oddOneQuestions.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 font-semibold">
+                    Pinpoint which item in this cluster of four is mismatched compared to the other three:
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {oddOneQuestions[gameState.currentStep].items.map((item, idx) => {
+                      const isSelected = oddSelected === item;
+                      const isCorrectOdd = item === oddOneQuestions[gameState.currentStep].odd;
+
+                      let style = "bg-slate-50 border-slate-200 hover:bg-slate-100";
+                      if (oddSelected) {
+                        if (isCorrectOdd) style = "bg-emerald-100 border-emerald-300 text-emerald-900 pointer-events-none";
+                        else if (isSelected) style = "bg-red-100 border-red-300 text-red-900 pointer-events-none";
+                        else style = "opacity-50 pointer-events-none";
+                      }
+
+                      return (
+                        <button
+                          key={idx}
+                          onClick={() => handleOddSelect(item)}
+                          disabled={!!oddSelected}
+                          className={`p-4 border rounded-xl text-sm font-bold text-left transition-all cursor-pointer ${style}`}
+                        >
+                          {item}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {oddSelected && (
+                    <div className="space-y-4 pt-4 border-t border-slate-100 animate-fade-in">
+                      <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 font-semibold">
+                        <p className="font-bold">Did you know?</p>
+                        <p className="mt-1 leading-relaxed">
+                          {oddOneQuestions[gameState.currentStep].reason}
+                        </p>
+                      </div>
+
+                      <button 
+                        onClick={handleNextOdd}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Clues</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+              {/* GAME 9: Bible Book Order */}
+              {activeGameId === 'book_order' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">BOOK SEQUENCING — ROUND {gameState.currentStep + 1} OF {bookOrderQuestions.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <p className="text-xs text-slate-500 font-semibold">
+                    Shift the books in chronological order as they appear from Left to Right (Genesis to Revelation):
+                  </p>
+
+                  <div className="flex flex-wrap gap-4 py-4 justify-center">
+                    {currentOrder.map((book, idx) => (
+                      <div 
+                        key={book}
+                        className="flex flex-col items-center p-4 bg-slate-50 border-2 border-primary/20 rounded-2xl w-32 shadow-sm relative"
+                      >
+                        <span className="font-serif text-sm font-extrabold text-primary">{book}</span>
+                        
+                        {!orderFeedback && (
+                          <div className="flex gap-1.5 mt-3">
+                            <button
+                              onClick={() => handleMoveOrder(idx, 'up')}
+                              disabled={idx === 0}
+                              className="px-2 py-0.5 bg-white border rounded text-xs hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                              title="Move Left"
+                            >
+                              ←
+                            </button>
+                            <button
+                              onClick={() => handleMoveOrder(idx, 'down')}
+                              disabled={idx === currentOrder.length - 1}
+                              className="px-2 py-0.5 bg-white border rounded text-xs hover:bg-slate-100 disabled:opacity-30 cursor-pointer"
+                              title="Move Right"
+                            >
+                              →
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+
+                  {!orderFeedback ? (
+                    <button
+                      onClick={handleVerifyOrder}
+                      className="px-8 py-2.5 bg-primary text-white font-bold text-xs rounded-xl shadow cursor-pointer"
+                    >
+                      Verify Sequencing Order
+                    </button>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                        orderFeedback.includes("Exquisite") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                      }`}>
+                        {orderFeedback.includes("Exquisite") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {orderFeedback}
+                      </div>
+
+                      <button 
+                        onClick={handleNextOrder}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Step</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+
+              {/* GAME 10: Map Landmarks Quiz */}
+              {activeGameId === 'map_landmarks' && (
+                <div className="space-y-6">
+                  <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                    <span className="text-xs font-bold text-primary">MAP GEOGRAPHY — STEP {gameState.currentStep + 1} OF {mapLandmarksQuestions.length}</span>
+                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                  </div>
+
+                  <div className="bg-rose-50/20 border border-rose-100 rounded-2xl p-6 text-center space-y-2 relative overflow-hidden">
+                    <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
+                      <MapPin className="w-24 h-24 text-rose-900" />
+                    </div>
+                    <p className="text-[10px] text-rose-600 font-extrabold uppercase">Spot the Location:</p>
+                    <p className="font-serif text-sm md:text-base text-slate-800 font-semibold max-w-xl mx-auto">
+                      "{mapLandmarksQuestions[gameState.currentStep].landmark}"
+                    </p>
+                  </div>
+
+                  {!mapFeedback ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {mapLandmarksQuestions[gameState.currentStep].options.map((opt, idx) => (
+                        <button
+                          key={idx}
+                          onClick={() => handleMapAnswer(opt)}
+                          className="p-4 bg-slate-50 hover:bg-rose-50 hover:text-rose-900 border border-slate-200 hover:border-rose-300 rounded-xl text-sm font-bold text-slate-700 transition-all text-left cursor-pointer"
+                        >
+                          📍 {opt}
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
+                        mapFeedback.includes("perfect") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                      }`}>
+                        {mapFeedback.includes("perfect") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {mapFeedback}
+                      </div>
+
+                      <button 
+                        onClick={handleNextMap}
+                        className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
+                      >
+                        <span>Next Step</span>
+                        <ArrowRight className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          )}
+
+        </div>
+      )}
+
+    </div>
+  );
+}
