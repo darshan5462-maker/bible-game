@@ -37,6 +37,18 @@ import {
   bookOrderQuestions,
   mapLandmarksQuestions
 } from '../data/gamesData';
+import {
+  charFindQuestionsKn,
+  matchRoundsKn,
+  scrambleVersesKn,
+  riddlesKn,
+  guessWordHintsKn,
+  tfQuestionsKn,
+  blanksQuestionsKn,
+  oddOneQuestionsKn,
+  bookOrderQuestionsKn,
+  mapLandmarksQuestionsKn
+} from '../data/gamesDataKn';
 
 interface GamesTabProps {
   stats: UserStats;
@@ -348,16 +360,16 @@ export default function GamesTab({
     // 8.
     setOddSelected(null);
     // 9.
-    setCurrentOrder([...bookOrderQuestions[0].initial]);
+    setCurrentOrder(lang === 'kn' ? [...bookOrderQuestionsKn[0].initialKn] : [...bookOrderQuestions[0].initial]);
     setOrderFeedback(null);
     // 10.
     setMapFeedback(null);
   };
 
-  // Run on start
+  // Run on start and language toggle
   useEffect(() => {
     setSubGameStates();
-  }, [activeGameId]);
+  }, [activeGameId, lang]);
 
   // True/False countdown timer
   useEffect(() => {
@@ -381,14 +393,20 @@ export default function GamesTab({
   // 1. Character Finding action
   const handleCharAnswer = (choice: string) => {
     if (charFeedback) return;
-    const isCorrect = choice === charFindQuestions[gameState.currentStep].target;
+    const currentQ = charFindQuestions[gameState.currentStep];
+    const currentQKn = charFindQuestionsKn[gameState.currentStep];
+    const isCorrect = lang === 'kn' ? (choice === currentQKn.targetKn) : (choice === currentQ.target);
+
     if (isCorrect) {
       playSfx('correct');
-      setCharFeedback("Correct! Splendid job.");
+      setCharFeedback(lang === 'kn' ? "ಸರಿ! ಅದ್ಭುತ ಕೆಲಸ." : "Correct! Splendid job.");
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
-      setCharFeedback(`Wrong! The correct answer was ${charFindQuestions[gameState.currentStep].target}.`);
+      setCharFeedback(lang === 'kn'
+        ? `ತಪ್ಪು! ಸರಿಯಾದ ಉತ್ತರ ${currentQKn.targetKn}.`
+        : `Wrong! The correct answer was ${currentQ.target}.`
+      );
     }
   };
 
@@ -463,16 +481,23 @@ export default function GamesTab({
 
   const handleConfirmScramble = () => {
     const currentQ = scrambleVerses[gameState.currentStep];
+    const currentQKn = scrambleVersesKn[gameState.currentStep];
     const userString = scrambleAnswer.join(" ");
-    const correctString = currentQ.correctOrder.join(" ");
+    const correctString = lang === 'kn' ? currentQKn.correctOrderKn.join(" ") : currentQ.correctOrder.join(" ");
 
     if (userString === correctString) {
       playSfx('correct');
-      setScrambleFeedback("Correct! You have beautifully assembled the scripture.");
+      setScrambleFeedback(lang === 'kn'
+        ? "ಸರಿ! ನೀವು ಪವಿತ್ರ ಗ್ರಂಥವನ್ನು ಸುಂದರವಾಗಿ ಜೋಡಿಸಿದ್ದೀರಿ."
+        : "Correct! You have beautifully assembled the scripture."
+      );
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
-      setScrambleFeedback("Not quite correct. Try rearranging the words differently.");
+      setScrambleFeedback(lang === 'kn'
+        ? "ಸರಿಯಾಗಿಲ್ಲ. ಮಾತುಗಳನ್ನು ಬೇರೆ ರೀತಿಯಲ್ಲಿ ಜೋಡಿಸಲು ಪ್ರಯತ್ನಿಸಿ."
+        : "Not quite correct. Try rearranging the words differently."
+      );
     }
   };
 
@@ -493,14 +518,20 @@ export default function GamesTab({
   // 4. Who Am I Riddles action
   const handleRiddleAnswer = (choice: string) => {
     if (riddleFeedback) return;
-    const isCorrect = choice === riddles[gameState.currentStep].answer;
+    const currentQ = riddles[gameState.currentStep];
+    const currentQKn = riddlesKn[gameState.currentStep];
+    const isCorrect = lang === 'kn' ? (choice === currentQKn.answerKn) : (choice === currentQ.answer);
+
     if (isCorrect) {
       playSfx('correct');
-      setRiddleFeedback("Correct! You figured out who it was!");
+      setRiddleFeedback(lang === 'kn' ? "ಸರಿ! ಅವರು ಯಾರೆಂದು ನೀವು ಕಂಡುಹಿಡಿದಿದ್ದೀರಿ!" : "Correct! You figured out who it was!");
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
-      setRiddleFeedback(`Incorrect! This was ${riddles[gameState.currentStep].answer}.`);
+      setRiddleFeedback(lang === 'kn'
+        ? `ತಪ್ಪು! ಇದು ${currentQKn.answerKn}.`
+        : `Incorrect! This was ${currentQ.answer}.`
+      );
     }
   };
 
@@ -570,14 +601,19 @@ export default function GamesTab({
   // 7. Fill in the Blanks action
   const handleBlanksAnswer = (choice: string) => {
     if (blanksFeedback) return;
-    const isCorrect = choice === blanksQuestions[gameState.currentStep].missing;
+    const currentQ = blanksQuestions[gameState.currentStep];
+    const currentQKn = blanksQuestionsKn[gameState.currentStep];
+    const isCorrect = lang === 'kn' ? (choice === currentQKn.missingKn) : (choice === currentQ.missing);
     if (isCorrect) {
       playSfx('correct');
-      setBlanksFeedback("Superb! Correct word choice.");
+      setBlanksFeedback(lang === 'kn' ? "ಅದ್ಭುತ! ಸರಿಯಾದ ಪದ ಆಯ್ಕೆ." : "Superb! Correct word choice.");
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
-      setBlanksFeedback(`Incorrect. The correct word is: ${blanksQuestions[gameState.currentStep].missing}`);
+      setBlanksFeedback(lang === 'kn'
+        ? `ತಪ್ಪು. ಸರಿಯಾದ ಪದ: ${currentQKn.missingKn}`
+        : `Incorrect. The correct word is: ${currentQ.missing}`
+      );
     }
   };
 
@@ -598,8 +634,10 @@ export default function GamesTab({
   const handleOddSelect = (item: string) => {
     if (oddSelected) return;
     const currentQ = oddOneQuestions[gameState.currentStep];
+    const currentQKn = oddOneQuestionsKn[gameState.currentStep];
     setOddSelected(item);
-    if (item === currentQ.odd) {
+    const isCorrect = lang === 'kn' ? (item === currentQKn.oddKn) : (item === currentQ.odd);
+    if (isCorrect) {
       playSfx('correct');
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
@@ -638,22 +676,27 @@ export default function GamesTab({
 
   const handleVerifyOrder = () => {
     const correctArr = bookOrderQuestions[gameState.currentStep].correct;
-    const isCorrect = currentOrder.every((val, idx) => val === correctArr[idx]);
+    const correctArrKn = bookOrderQuestionsKn[gameState.currentStep].correctKn;
+    const isCorrect = currentOrder.every((val, idx) => val === (lang === 'kn' ? correctArrKn[idx] : correctArr[idx]));
     if (isCorrect) {
       playSfx('correct');
-      setOrderFeedback("Exquisite! You ordered the books in correct sequence.");
+      setOrderFeedback(lang === 'kn' ? "ಅತ್ಯುತ್ತಮ! ನೀವು ಪುಸ್ತಕಗಳನ್ನು ಸರಿಯಾದ ಅನುಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿದ್ದೀರಿ." : "Exquisite! You ordered the books in correct sequence.");
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
-      setOrderFeedback(`Incorrect order. The actual sequence is: ${correctArr.join(" → ")}`);
+      setOrderFeedback(lang === 'kn'
+        ? `ತಪ್ಪಾದ ಕ್ರಮ. ಸರಿಯಾದ ಅನುಕ್ರಮ: ${correctArrKn.join(" → ")}`
+        : `Incorrect order. The actual sequence is: ${correctArr.join(" → ")}`
+      );
     }
   };
 
   const handleNextOrder = () => {
     setOrderFeedback(null);
     if (gameState.currentStep < bookOrderQuestions.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
-      setCurrentOrder([...bookOrderQuestions[gameState.currentStep + 1].initial]);
+      const nextStep = gameState.currentStep + 1;
+      setGameState((prev: any) => ({ ...prev, currentStep: nextStep }));
+      setCurrentOrder(lang === 'kn' ? [...bookOrderQuestionsKn[nextStep].initialKn] : [...bookOrderQuestions[nextStep].initial]);
     } else {
       const finalScore = gameState.score;
       const gameDef = gamesList.find(g => g.id === 'book_order')!;
@@ -666,14 +709,19 @@ export default function GamesTab({
   // 10. Map Landmarks action
   const handleMapAnswer = (choice: string) => {
     if (mapFeedback) return;
-    const isCorrect = choice === mapLandmarksQuestions[gameState.currentStep].answer;
+    const currentQ = mapLandmarksQuestions[gameState.currentStep];
+    const currentQKn = mapLandmarksQuestionsKn[gameState.currentStep];
+    const isCorrect = lang === 'kn' ? (choice === currentQKn.answerKn) : (choice === currentQ.answer);
     if (isCorrect) {
       playSfx('correct');
-      setMapFeedback("A perfect geographical match! Keep it up.");
+      setMapFeedback(lang === 'kn' ? "ಪರಿಪೂರ್ಣ ಭೌಗೋಳಿಕ ಹೊಂದಾಣಿಕೆ! ಮುಂದುವರಿಯಿರಿ." : "A perfect geographical match! Keep it up.");
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
-      setMapFeedback(`Incorrect. That landmark historical event belongs in: ${mapLandmarksQuestions[gameState.currentStep].answer}`);
+      setMapFeedback(lang === 'kn'
+        ? `ತಪ್ಪು. ಆ ಪ್ರಮುಖ ಐತಿಹಾಸಿಕ ಘಟನೆ ನಡೆದ ಸ್ಥಳ: ${currentQKn.answerKn}`
+        : `Incorrect. That landmark historical event belongs in: ${currentQ.answer}`
+      );
     }
   };
 
@@ -702,21 +750,30 @@ export default function GamesTab({
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-primary">
               <Gamepad2 className="w-5 h-5 animate-bounce" />
-              <span className="text-xs font-bold uppercase tracking-wider">Bible Interactive Games Arcade</span>
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {lang === 'kn' ? "ಬೈಬಲ್ ಸಂವಾದಾತ್ಮಕ ಆಟಗಳ ಆರ್ಕೇಡ್" : "Bible Interactive Games Arcade"}
+              </span>
             </div>
             <h1 className="font-serif text-3xl font-bold text-primary tracking-tight">
               {lang === 'en' ? 'Arcade Quest Rooms' : 'ಆರ್ಕೇಡ್ ಕ್ವೆಸ್ಟ್ ಕೊಠಡಿಗಳು'}
             </h1>
             <p className="text-xs md:text-sm text-on-surface-variant font-medium max-w-xl">
-              Immerse yourself in ten highly specialized game variations designed to drill scripture knowledge. Gain Gold, elevate your level, and expand your character!
+              {lang === 'en' 
+                ? "Immerse yourself in ten highly specialized game variations designed to drill scripture knowledge. Gain Gold, elevate your level, and expand your character!" 
+                : "ಶಾಸ್ತ್ರಜ್ಞಾನವನ್ನು ಹೆಚ್ಚಿಸಲು ವಿನ್ಯಾಸಗೊಳಿಸಲಾದ ಹತ್ತು ಅತ್ಯಂತ ವಿಶೇಷವಾದ ಆಟಗಳಲ್ಲಿ ಮುಳುಗಿರಿ. ಚಿನ್ನ ಗಳಿಸಿ, ನಿಮ್ಮ ಮಟ್ಟವನ್ನು ಹೆಚ್ಚಿಸಿ ಮತ್ತು ನಿಮ್ಮ ಪಾತ್ರವನ್ನು ಬೆಳೆಸಿಕೊಳ್ಳಿ!"
+              }
             </p>
           </div>
           
           <div className="flex items-center gap-4 bg-white px-5 py-3 rounded-2xl border border-outline-variant/30 shadow-sm">
             <Sparkles className="w-5 h-5 text-secondary animate-pulse" />
             <div>
-              <p className="text-[10px] text-outline font-bold uppercase">Character Rank</p>
-              <p className="font-serif text-xs font-bold text-primary">Lvl {stats.level} Quest Master</p>
+              <p className="text-[10px] text-outline font-bold uppercase">
+                {lang === 'kn' ? "ಪಾತ್ರದ ಶ್ರೇಣಿ" : "Character Rank"}
+              </p>
+              <p className="font-serif text-xs font-bold text-primary">
+                Lvl {stats.level} {lang === 'kn' ? "ಕ್ವೆಸ್ಟ್ ಮಾಸ್ಟರ್" : "Quest Master"}
+              </p>
             </div>
           </div>
         </div>
@@ -731,6 +788,10 @@ export default function GamesTab({
               game.difficulty === 'Medium' ? 'bg-amber-100 text-amber-800 border-amber-200' :
               'bg-red-100 text-red-800 border-red-200';
 
+            const difficultyLabel = lang === 'kn' 
+              ? (game.difficulty === 'Easy' ? 'ಸುಲಭ' : game.difficulty === 'Medium' ? 'ಮಧ್ಯಮ' : 'ಕಠಿಣ')
+              : game.difficulty;
+
             return (
               <div 
                 key={game.id}
@@ -742,7 +803,7 @@ export default function GamesTab({
                       {game.icon}
                     </div>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${diffColor}`}>
-                      {game.difficulty}
+                      {difficultyLabel}
                     </span>
                   </div>
 
@@ -761,7 +822,7 @@ export default function GamesTab({
                     </span>
                     <span className="flex items-center gap-1 text-amber-500">
                       <Coins className="w-3.5 h-3.5 fill-amber-500/10" />
-                      +{game.coinReward} Gold
+                      +{game.coinReward} {lang === 'kn' ? "ಚಿನ್ನ" : "Gold"}
                     </span>
                   </div>
                 </div>
@@ -771,7 +832,9 @@ export default function GamesTab({
                     onClick={() => { playSfx('click'); setActiveGameId(game.id); }}
                     className="w-full py-2.5 bg-primary hover:bg-primary/95 text-white rounded-xl font-bold text-xs shadow hover:shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <span>Play Game {idx + 1}</span>
+                    <span>
+                      {lang === 'kn' ? `ಆಟವಾಡಿ ${idx + 1}` : `Play Game ${idx + 1}`}
+                    </span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </button>
                 </div>
@@ -792,16 +855,19 @@ export default function GamesTab({
               <button 
                 onClick={handleBackToSelect}
                 className="p-2 bg-slate-50 hover:bg-slate-100 rounded-full text-slate-500 hover:text-primary transition-colors cursor-pointer"
-                title="Return to Game Selection Rooms"
+                title={lang === 'kn' ? "ಆಟದ ಆಯ್ಕೆಗೆ ಹಿಂತಿರುಗಿ" : "Return to Game Selection Rooms"}
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <div>
                 <h2 className="font-serif text-xl font-bold text-primary">
-                  {gamesList.find(g => g.id === activeGameId)?.title}
+                  {lang === 'kn' 
+                    ? gamesList.find(g => g.id === activeGameId)?.titleKn 
+                    : gamesList.find(g => g.id === activeGameId)?.title
+                  }
                 </h2>
                 <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  Arcade Arena Room
+                  {lang === 'kn' ? "ಆರ್ಕೇಡ್ ಅಖಾಡ ಕೊಠಡಿ" : "Arcade Arena Room"}
                 </p>
               </div>
             </div>
@@ -812,13 +878,13 @@ export default function GamesTab({
                 className="flex items-center gap-1.5 px-4 py-1.5 border border-slate-200 hover:border-primary/40 text-xs font-bold text-slate-500 hover:text-primary rounded-full bg-white transition-all cursor-pointer"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
-                Restart Session
+                {lang === 'kn' ? "ಮರುಪ್ರಾರಂಭಿಸಿ" : "Restart Session"}
               </button>
               <button
                 onClick={handleBackToSelect}
                 className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-50 hover:bg-slate-100 text-xs font-bold text-slate-600 rounded-full transition-all cursor-pointer"
               >
-                Other Game Rooms
+                {lang === 'kn' ? "ಇತರ ಆಟದ ಕೊಠಡಿಗಳು" : "Other Game Rooms"}
               </button>
             </div>
           </div>
@@ -830,17 +896,27 @@ export default function GamesTab({
               <div className="w-16 h-16 bg-amber-50 rounded-full border border-amber-200 flex items-center justify-center text-amber-500 mx-auto mb-4 animate-bounce">
                 <Award className="w-8 h-8 fill-amber-100" />
               </div>
-              <h2 className="font-serif text-2xl font-bold text-primary">Game Finished!</h2>
-              <p className="text-xs text-slate-400 font-semibold mt-1">Excellent performance in the Bible Arcade!</p>
+              <h2 className="font-serif text-2xl font-bold text-primary">
+                {lang === 'kn' ? "ಆಟ ಮುಗಿದಿದೆ!" : "Game Finished!"}
+              </h2>
+              <p className="text-xs text-slate-400 font-semibold mt-1">
+                {lang === 'kn' ? "ಬೈಬಲ್ ಆರ್ಕೇಡ್‌ನಲ್ಲಿ ಅತ್ಯುತ್ತಮ ಪ್ರದರ್ಶನ!" : "Excellent performance in the Bible Arcade!"}
+              </p>
               
               <div className="grid grid-cols-2 gap-4 my-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div className="text-center">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">XP Awarded</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    {lang === 'kn' ? "ಗಳಿಸಿದ XP" : "XP Awarded"}
+                  </p>
                   <p className="text-lg font-bold text-secondary">+{gameState.earnedXp} XP</p>
                 </div>
                 <div className="text-center border-l border-slate-200">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase">Coins Earned</p>
-                  <p className="text-lg font-bold text-amber-500">+{gameState.earnedCoins} Gold</p>
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    {lang === 'kn' ? "ಗಳಿಸಿದ ನಾಣ್ಯಗಳು" : "Coins Earned"}
+                  </p>
+                  <p className="text-lg font-bold text-amber-500">
+                    +{gameState.earnedCoins} {lang === 'kn' ? "ಚಿನ್ನ" : "Gold"}
+                  </p>
                 </div>
               </div>
 
@@ -849,13 +925,13 @@ export default function GamesTab({
                   onClick={handleResetGameSession}
                   className="w-full sm:w-auto px-6 py-2.5 bg-slate-150 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
                 >
-                  Play Again
+                  {lang === 'kn' ? "ಮತ್ತೆ ಆಡಿ" : "Play Again"}
                 </button>
                 <button 
                   onClick={handleBackToSelect}
                   className="w-full sm:w-auto px-8 py-2.5 bg-primary hover:bg-primary/90 text-white font-bold text-xs rounded-xl shadow cursor-pointer"
                 >
-                  Select Other Game Rooms
+                  {lang === 'kn' ? "ಇತರ ಕೊಠಡಿಗಳನ್ನು ಆಯ್ಕೆಮಾಡಿ" : "Select Other Game Rooms"}
                 </button>
               </div>
             </div>
@@ -870,19 +946,33 @@ export default function GamesTab({
               {activeGameId === 'char_find' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">CHAR FIND — STEP {gameState.currentStep + 1} OF {charFindQuestions.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn' 
+                        ? `ಪಾತ್ರ ಶೋಧ — ಹಂತ ${gameState.currentStep + 1} / ${charFindQuestions.length}`
+                        : `CHAR FIND — STEP ${gameState.currentStep + 1} OF ${charFindQuestions.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <div className="bg-primary/5 rounded-2xl p-6 space-y-4">
-                    <p className="text-xs font-bold text-primary uppercase">Read Clues Carefully:</p>
+                    <p className="text-xs font-bold text-primary uppercase">
+                      {lang === 'kn' ? "ಸುಳಿವುಗಳನ್ನು ಎಚ್ಚರಿಕೆಯಿಂದ ಓದಿ:" : "Read Clues Carefully:"}
+                    </p>
                     <ul className="space-y-3">
-                      {charFindQuestions[gameState.currentStep].clues.slice(0, charCluesShown).map((clue, idx) => (
-                        <li key={idx} className="text-sm font-semibold text-slate-700 bg-white p-3 rounded-xl border border-slate-100 animate-fade-in flex items-start gap-2">
-                          <span className="text-primary font-bold">Clue {idx + 1}:</span>
-                          <span>{clue}</span>
-                        </li>
-                      ))}
+                      {(lang === 'kn' ? charFindQuestionsKn[gameState.currentStep].cluesKn : charFindQuestions[gameState.currentStep].clues)
+                        .slice(0, charCluesShown)
+                        .map((clue, idx) => (
+                          <li key={idx} className="text-sm font-semibold text-slate-700 bg-white p-3 rounded-xl border border-slate-100 animate-fade-in flex items-start gap-2">
+                            <span className="text-primary font-bold">
+                              {lang === 'kn' ? `ಸುಳಿವು ${idx + 1}:` : `Clue ${idx + 1}:`}
+                            </span>
+                            <span>{clue}</span>
+                          </li>
+                        ))
+                      }
                     </ul>
 
                     {charCluesShown < 3 && !charFeedback && (
@@ -890,14 +980,14 @@ export default function GamesTab({
                         onClick={() => { playSfx('click'); setCharCluesShown(prev => prev + 1); }}
                         className="text-xs text-primary font-bold hover:underline cursor-pointer"
                       >
-                        + Reveal Next Clue
+                        {lang === 'kn' ? "+ ಮುಂದಿನ ಸುಳಿವು ಬಹಿರಂಗಪಡಿಸಿ" : "+ Reveal Next Clue"}
                       </button>
                     )}
                   </div>
 
                   {!charFeedback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {charFindQuestions[gameState.currentStep].options.map((opt, idx) => (
+                      {(lang === 'kn' ? charFindQuestionsKn[gameState.currentStep].optionsKn : charFindQuestions[gameState.currentStep].options).map((opt, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleCharAnswer(opt)}
@@ -910,9 +1000,9 @@ export default function GamesTab({
                   ) : (
                     <div className="space-y-4">
                       <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 ${
-                        charFeedback.includes("Correct") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                        (charFeedback.includes("Correct") || charFeedback.includes("ಸರಿ")) ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                       }`}>
-                        {charFeedback.includes("Correct") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {(charFeedback.includes("Correct") || charFeedback.includes("ಸರಿ")) ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                         {charFeedback}
                       </div>
 
@@ -920,7 +1010,7 @@ export default function GamesTab({
                         onClick={handleNextChar}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Step</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ಹಂತ" : "Next Step"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -933,18 +1023,33 @@ export default function GamesTab({
               {activeGameId === 'word_match' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">WORD MATCH — ROUND {gameState.currentStep + 1} OF {matchRounds.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Streak: {matchedTerms.length}/4 matched</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ಪದ ಹೊಂದಾಣಿಕೆ — ಸುತ್ತು ${gameState.currentStep + 1} / ${matchRounds.length}`
+                        : `WORD MATCH — ROUND ${gameState.currentStep + 1} OF ${matchRounds.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn'
+                        ? `ಸರಣಿ: ${matchedTerms.length}/4 ಹೊಂದಿಸಲಾಗಿದೆ`
+                        : `Streak: ${matchedTerms.length}/4 matched`
+                      }
+                    </span>
                   </div>
 
                   <p className="text-xs text-slate-500 font-semibold">
-                    Select a term on the left, then click its corresponding definition on the right!
+                    {lang === 'kn'
+                      ? "ಎಡಭಾಗದಲ್ಲಿರುವ ಪದವನ್ನು ಆರಿಸಿ, ನಂತರ ಬಲಭಾಗದಲ್ಲಿ ಅದಕ್ಕೆ ಸೂಕ್ತವಾದ ವಿವರಣೆಯನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ!"
+                      : "Select a term on the left, then click its corresponding definition on the right!"
+                    }
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
                     {/* Left Term Column */}
                     <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Terms</h4>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">
+                        {lang === 'kn' ? "ಪದಗಳು" : "Terms"}
+                      </h4>
                       {matchRounds[gameState.currentStep].pairs.map((pair, idx) => {
                         const isMatched = matchedTerms.includes(pair.term);
                         const isSelected = selectedTerm === pair.term;
@@ -952,6 +1057,9 @@ export default function GamesTab({
                         let style = "bg-slate-50 border-slate-200 hover:bg-slate-100";
                         if (isMatched) style = "bg-emerald-100 border-emerald-300 text-emerald-900 pointer-events-none";
                         else if (isSelected) style = "bg-primary/10 border-primary text-primary";
+
+                        const pairIndex = matchRounds[gameState.currentStep].pairs.findIndex(p => p.term === pair.term);
+                        const termLabel = lang === 'kn' && pairIndex !== -1 ? matchRoundsKn[gameState.currentStep].pairsKn[pairIndex].termKn : pair.term;
 
                         return (
                           <button
@@ -961,7 +1069,7 @@ export default function GamesTab({
                               matchWrong && isSelected ? 'shake-animation border-red-500 text-red-700 bg-red-50' : ''
                             }`}
                           >
-                            {pair.term}
+                            {termLabel}
                             {isMatched && <span className="float-right text-emerald-600">✓</span>}
                           </button>
                         );
@@ -970,7 +1078,9 @@ export default function GamesTab({
 
                     {/* Right Definitions Column */}
                     <div className="space-y-3">
-                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">Definitions</h4>
+                      <h4 className="text-xs font-bold text-slate-400 uppercase mb-2">
+                        {lang === 'kn' ? "ವಿವರಣೆಗಳು" : "Definitions"}
+                      </h4>
                       {/* Jumbled render list of definitions */}
                       {[...matchRounds[gameState.currentStep].pairs]
                         .sort((a, b) => a.def.localeCompare(b.def))
@@ -979,6 +1089,9 @@ export default function GamesTab({
 
                           let style = "bg-slate-50 border-slate-200 hover:bg-slate-100";
                           if (isMatched) style = "bg-emerald-100 border-emerald-300 text-emerald-900 pointer-events-none";
+
+                          const pairIndex = matchRounds[gameState.currentStep].pairs.findIndex(p => p.def === pair.def);
+                          const defLabel = lang === 'kn' && pairIndex !== -1 ? matchRoundsKn[gameState.currentStep].pairsKn[pairIndex].defKn : pair.def;
 
                           return (
                             <button
@@ -989,7 +1102,7 @@ export default function GamesTab({
                                 !selectedTerm && !isMatched ? 'opacity-50 cursor-not-allowed' : ''
                               }`}
                             >
-                              {pair.def}
+                              {defLabel}
                             </button>
                           );
                         })}
@@ -1003,18 +1116,30 @@ export default function GamesTab({
               {activeGameId === 'verse_scramble' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">VERSE SCRAMBLE — ROUND {gameState.currentStep + 1} OF {scrambleVerses.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ವಾಕ್ಯ ಜೋಡಣೆ — ಸುತ್ತು ${gameState.currentStep + 1} / ${scrambleVerses.length}`
+                        : `VERSE SCRAMBLE — ROUND ${gameState.currentStep + 1} OF ${scrambleVerses.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <p className="text-xs text-slate-500 font-semibold">
-                    Reorder the jumbled words of the scripture in correct canonical sequence:
+                    {lang === 'kn'
+                      ? "ಪವಿತ್ರ ಗ್ರಂಥದ ಅಸ್ತವ್ಯಸ್ತವಾಗಿರುವ ಪದಗಳನ್ನು ಸರಿಯಾದ ಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿ:"
+                      : "Reorder the jumbled words of the scripture in correct canonical sequence:"
+                    }
                   </p>
 
                   {/* Assembled Area */}
                   <div className="p-5 border-2 border-dashed border-slate-200 rounded-2xl min-h-[80px] bg-slate-50 flex flex-wrap gap-2 items-center">
                     {scrambleAnswer.length === 0 ? (
-                      <span className="text-xs text-slate-400 font-bold">Click words below to assemble...</span>
+                      <span className="text-xs text-slate-400 font-bold">
+                        {lang === 'kn' ? "ಜೋಡಿಸಲು ಕೆಳಗಿನ ಪದಗಳನ್ನು ಕ್ಲಿಕ್ ಮಾಡಿ..." : "Click words below to assemble..."}
+                      </span>
                     ) : (
                       scrambleAnswer.map((word, idx) => (
                         <button
@@ -1030,9 +1155,11 @@ export default function GamesTab({
 
                   {/* Word Options */}
                   <div className="space-y-3">
-                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Word Bank</h4>
+                    <h4 className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                      {lang === 'kn' ? "ಪದ ಬ್ಯಾಂಕ್" : "Word Bank"}
+                    </h4>
                     <div className="flex flex-wrap gap-2">
-                      {scrambleVerses[gameState.currentStep].words
+                      {(lang === 'kn' ? scrambleVersesKn[gameState.currentStep].wordsKn : scrambleVerses[gameState.currentStep].words)
                         .filter(w => !scrambleAnswer.includes(w))
                         .map((word, idx) => (
                           <button
@@ -1052,22 +1179,22 @@ export default function GamesTab({
                         onClick={() => setScrambleAnswer([])}
                         className="px-6 py-2.5 border border-slate-200 rounded-xl font-bold text-xs hover:bg-slate-50 transition-colors"
                       >
-                        Reset Sequence
+                        {lang === 'kn' ? "ಮರುಹೊಂದಿಸಿ" : "Reset Sequence"}
                       </button>
                       <button
                         onClick={handleConfirmScramble}
-                        disabled={scrambleAnswer.length < scrambleVerses[gameState.currentStep].words.length}
+                        disabled={scrambleAnswer.length < (lang === 'kn' ? scrambleVersesKn[gameState.currentStep].wordsKn.length : scrambleVerses[gameState.currentStep].words.length)}
                         className="px-8 py-2.5 bg-primary text-white font-bold text-xs rounded-xl disabled:opacity-50"
                       >
-                        Verify Sequence
+                        {lang === 'kn' ? "ಪರಿಶೀಲಿಸಿ" : "Verify Sequence"}
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                        scrambleFeedback.includes("Correct") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                        (scrambleFeedback.includes("Correct") || scrambleFeedback.includes("ಸರಿ")) ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                       }`}>
-                        {scrambleFeedback.includes("Correct") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {(scrambleFeedback.includes("Correct") || scrambleFeedback.includes("ಸರಿ")) ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                         {scrambleFeedback}
                       </div>
 
@@ -1075,7 +1202,7 @@ export default function GamesTab({
                         onClick={handleNextScramble}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Scripture</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ವಾಕ್ಯ" : "Next Scripture"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1088,8 +1215,15 @@ export default function GamesTab({
               {activeGameId === 'who_am_i' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">WHO AM I — QUESTION {gameState.currentStep + 1} OF {riddles.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ನಾನು ಯಾರು? — ಪ್ರಶ್ನೆ ${gameState.currentStep + 1} / ${riddles.length}`
+                        : `WHO AM I — QUESTION ${gameState.currentStep + 1} OF ${riddles.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <div className="bg-purple-50/40 border border-purple-100 rounded-2xl p-6 relative overflow-hidden">
@@ -1097,13 +1231,13 @@ export default function GamesTab({
                       <MessageSquare className="w-32 h-32 text-purple-900" />
                     </div>
                     <p className="font-serif text-sm md:text-base text-slate-800 leading-relaxed italic">
-                      "{riddles[gameState.currentStep].riddle}"
+                      "{lang === 'kn' ? riddlesKn[gameState.currentStep].riddleKn : riddles[gameState.currentStep].riddle}"
                     </p>
                   </div>
 
                   {!riddleFeedback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {riddles[gameState.currentStep].options.map((opt, idx) => (
+                      {(lang === 'kn' ? riddlesKn[gameState.currentStep].optionsKn : riddles[gameState.currentStep].options).map((opt, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleRiddleAnswer(opt)}
@@ -1116,9 +1250,9 @@ export default function GamesTab({
                   ) : (
                     <div className="space-y-4">
                       <div className={`p-4 rounded-xl text-sm font-bold flex items-center gap-2 ${
-                        riddleFeedback.includes("Correct") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                        (riddleFeedback.includes("Correct") || riddleFeedback.includes("ಸರಿ")) ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                       }`}>
-                        {riddleFeedback.includes("Correct") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {(riddleFeedback.includes("Correct") || riddleFeedback.includes("ಸರಿ")) ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                         {riddleFeedback}
                       </div>
 
@@ -1126,7 +1260,7 @@ export default function GamesTab({
                         onClick={handleNextRiddle}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Riddle</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ಒಗಟು" : "Next Riddle"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1139,9 +1273,11 @@ export default function GamesTab({
               {activeGameId === 'word_guess' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">WORD GUESS ARENA — HARD LEVEL</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn' ? "ಪದ ಊಹೆ ಅಖಾಡ — ಕಠಿಣ ಮಟ್ಟ" : "WORD GUESS ARENA — HARD LEVEL"}
+                    </span>
                     <span className="text-xs font-bold text-red-500 flex items-center gap-1">
-                      🕯️ {livesLeft} candles remaining
+                      🕯️ {livesLeft} {lang === 'kn' ? "ಮೇಣದಬತ್ತಿಗಳು ಉಳಿದಿವೆ" : "candles remaining"}
                     </span>
                   </div>
 
@@ -1160,10 +1296,20 @@ export default function GamesTab({
                     })}
                   </div>
 
+                  {/* Kannada Hint */}
+                  {lang === 'kn' && (
+                    <div className="bg-primary/5 rounded-xl p-3 border border-primary/10 text-center max-w-md mx-auto my-3">
+                      <p className="text-xs font-bold text-primary">ಕನ್ನಡ ಸುಳಿವು:</p>
+                      <p className="text-sm font-semibold text-slate-700 mt-1">
+                        {guessWordHintsKn[currentGuessWord] || "ಬೈಬಲ್ ಪದ"}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Virtual Keyboard */}
                   <div className="space-y-4">
                     <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider text-center">
-                      Tap Letters to Guess the Biblical Term
+                      {lang === 'kn' ? "ಬೈಬಲ್ ಪದವನ್ನು ಊಹಿಸಲು ಅಕ್ಷರಗಳನ್ನು ಟ್ಯಾಪ್ ಮಾಡಿ" : "Tap Letters to Guess the Biblical Term"}
                     </p>
                     <div className="flex flex-wrap justify-center gap-2 max-w-xl mx-auto">
                       {"ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("").map((letter) => {
@@ -1198,16 +1344,25 @@ export default function GamesTab({
               {activeGameId === 'true_false' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">TRUE OR FALSE SPRINT — QUESTION {tfIndex + 1}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ಸರಿ ಅಥವಾ ತಪ್ಪು ಸರಣಿ — ಪ್ರಶ್ನೆ ${tfIndex + 1}`
+                        : `TRUE OR FALSE SPRINT — QUESTION ${tfIndex + 1}`
+                      }
+                    </span>
                     <div className="flex items-center gap-3 text-xs font-bold">
-                      <span className="text-secondary">🔥 Streak: {tfStreak}</span>
-                      <span className="text-red-500 animate-pulse">⏰ {tfTimeLeft}s remaining</span>
+                      <span className="text-secondary">
+                        {lang === 'kn' ? `🔥 ಸರಣಿ ಸಾಧನೆ: ${tfStreak}` : `🔥 Streak: ${tfStreak}`}
+                      </span>
+                      <span className="text-red-500 animate-pulse">
+                        ⏰ {tfTimeLeft}{lang === 'kn' ? "ಸೆಕೆಂಡ್ ಉಳಿದಿದೆ" : "s remaining"}
+                      </span>
                     </div>
                   </div>
 
                   <div className="bg-slate-50 border border-slate-150 rounded-2xl p-6 text-center">
                     <p className="font-serif text-lg text-slate-800 font-semibold max-w-xl mx-auto">
-                      "{tfQuestions[tfIndex].q}"
+                      "{lang === 'kn' ? tfQuestionsKn[tfIndex].qKn : tfQuestions[tfIndex].q}"
                     </p>
                   </div>
 
@@ -1216,13 +1371,13 @@ export default function GamesTab({
                       onClick={() => handleTfAnswer(true)}
                       className="py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-serif font-extrabold rounded-xl shadow cursor-pointer text-sm"
                     >
-                      True
+                      {lang === 'kn' ? "ಸರಿ" : "True"}
                     </button>
                     <button
                       onClick={() => handleTfAnswer(false)}
                       className="py-4 bg-red-600 hover:bg-red-700 text-white font-serif font-extrabold rounded-xl shadow cursor-pointer text-sm"
                     >
-                      False
+                      {lang === 'kn' ? "ತಪ್ಪು" : "False"}
                     </button>
                   </div>
                 </div>
@@ -1233,19 +1388,26 @@ export default function GamesTab({
               {activeGameId === 'fill_blanks' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">FILL IN BLANKS — STEP {gameState.currentStep + 1} OF {blanksQuestions.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ಖಾಲಿ ಜಾಗ ತುಂಬಿ — ಹಂತ ${gameState.currentStep + 1} / ${blanksQuestions.length}`
+                        : `FILL IN BLANKS — STEP ${gameState.currentStep + 1} OF ${blanksQuestions.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <div className="bg-indigo-50/20 border border-indigo-100 rounded-2xl p-6">
                     <p className="font-serif text-base text-slate-800 leading-relaxed text-center">
-                      "{blanksQuestions[gameState.currentStep].sentence}"
+                      "{lang === 'kn' ? blanksQuestionsKn[gameState.currentStep].sentenceKn : blanksQuestions[gameState.currentStep].sentence}"
                     </p>
                   </div>
 
                   {!blanksFeedback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {blanksQuestions[gameState.currentStep].options.map((opt, idx) => (
+                      {(lang === 'kn' ? blanksQuestionsKn[gameState.currentStep].optionsKn : blanksQuestions[gameState.currentStep].options).map((opt, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleBlanksAnswer(opt)}
@@ -1258,9 +1420,9 @@ export default function GamesTab({
                   ) : (
                     <div className="space-y-4">
                       <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                        blanksFeedback.includes("Superb") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                        (blanksFeedback.includes("Superb") || blanksFeedback.includes("ಅದ್ಭುತ")) ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                       }`}>
-                        {blanksFeedback.includes("Superb") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {(blanksFeedback.includes("Superb") || blanksFeedback.includes("ಅದ್ಭುತ")) ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                         {blanksFeedback}
                       </div>
 
@@ -1268,7 +1430,7 @@ export default function GamesTab({
                         onClick={handleNextBlanks}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Step</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ಹಂತ" : "Next Step"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1281,18 +1443,30 @@ export default function GamesTab({
               {activeGameId === 'odd_one' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">ODD ONE OUT — STEP {gameState.currentStep + 1} OF {oddOneQuestions.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ಗುಂಪಿಗೆ ಸೇರದ ಪದ — ಹಂತ ${gameState.currentStep + 1} / ${oddOneQuestions.length}`
+                        : `ODD ONE OUT — STEP ${gameState.currentStep + 1} OF ${oddOneQuestions.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <p className="text-xs text-slate-500 font-semibold">
-                    Pinpoint which item in this cluster of four is mismatched compared to the other three:
+                    {lang === 'kn'
+                      ? "ಈ ನಾಲ್ಕು ಪದಗಳಲ್ಲಿ ಉಳಿದ ಮೂರಕ್ಕೆ ಹೊಂದಿಕೆಯಾಗದ ಒಂದನ್ನು ಗುರುತಿಸಿ:"
+                      : "Pinpoint which item in this cluster of four is mismatched compared to the other three:"
+                    }
                   </p>
 
                   <div className="grid grid-cols-2 gap-4">
-                    {oddOneQuestions[gameState.currentStep].items.map((item, idx) => {
+                    {(lang === 'kn' ? oddOneQuestionsKn[gameState.currentStep].itemsKn : oddOneQuestions[gameState.currentStep].items).map((item, idx) => {
                       const isSelected = oddSelected === item;
-                      const isCorrectOdd = item === oddOneQuestions[gameState.currentStep].odd;
+                      const isCorrectOdd = lang === 'kn' 
+                        ? item === oddOneQuestionsKn[gameState.currentStep].oddKn
+                        : item === oddOneQuestions[gameState.currentStep].odd;
 
                       let style = "bg-slate-50 border-slate-200 hover:bg-slate-100";
                       if (oddSelected) {
@@ -1317,9 +1491,11 @@ export default function GamesTab({
                   {oddSelected && (
                     <div className="space-y-4 pt-4 border-t border-slate-100 animate-fade-in">
                       <div className="p-4 bg-amber-50 rounded-2xl border border-amber-200 text-xs text-amber-900 font-semibold">
-                        <p className="font-bold">Did you know?</p>
+                        <p className="font-bold">
+                          {lang === 'kn' ? "ನಿಮಗೆ ಗೊತ್ತೇ?" : "Did you know?"}
+                        </p>
                         <p className="mt-1 leading-relaxed">
-                          {oddOneQuestions[gameState.currentStep].reason}
+                          {lang === 'kn' ? oddOneQuestionsKn[gameState.currentStep].reasonKn : oddOneQuestions[gameState.currentStep].reason}
                         </p>
                       </div>
 
@@ -1327,7 +1503,7 @@ export default function GamesTab({
                         onClick={handleNextOdd}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Clues</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ಹಂತ" : "Next Clues"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1340,12 +1516,22 @@ export default function GamesTab({
               {activeGameId === 'book_order' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">BOOK SEQUENCING — ROUND {gameState.currentStep + 1} OF {bookOrderQuestions.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ಪುಸ್ತಕಗಳ ಕ್ರಮ ಜೋಡಣೆ — ಸುತ್ತು ${gameState.currentStep + 1} / ${bookOrderQuestions.length}`
+                        : `BOOK SEQUENCING — ROUND ${gameState.currentStep + 1} OF ${bookOrderQuestions.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <p className="text-xs text-slate-500 font-semibold">
-                    Shift the books in chronological order as they appear from Left to Right (Genesis to Revelation):
+                    {lang === 'kn'
+                      ? "ಪುಸ್ತಕಗಳನ್ನು ಎಡದಿಂದ ಬಲಕ್ಕೆ ಕಾಲಾನುಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿ (ಆದಿಕಾಂಡದಿಂದ ಪ್ರಕಟನೆಯವರೆಗೆ):"
+                      : "Shift the books in chronological order as they appear from Left to Right (Genesis to Revelation):"
+                    }
                   </p>
 
                   <div className="flex flex-wrap gap-4 py-4 justify-center">
@@ -1385,14 +1571,14 @@ export default function GamesTab({
                       onClick={handleVerifyOrder}
                       className="px-8 py-2.5 bg-primary text-white font-bold text-xs rounded-xl shadow cursor-pointer"
                     >
-                      Verify Sequencing Order
+                      {lang === 'kn' ? "ಕ್ರಮ ಜೋಡಣೆ ಪರಿಶೀಲಿಸಿ" : "Verify Sequencing Order"}
                     </button>
                   ) : (
                     <div className="space-y-4">
                       <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                        orderFeedback.includes("Exquisite") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                        (orderFeedback.includes("Exquisite") || orderFeedback.includes("ಅತ್ಯುತ್ತಮ")) ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                       }`}>
-                        {orderFeedback.includes("Exquisite") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {(orderFeedback.includes("Exquisite") || orderFeedback.includes("ಅತ್ಯುತ್ತಮ")) ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                         {orderFeedback}
                       </div>
 
@@ -1400,7 +1586,7 @@ export default function GamesTab({
                         onClick={handleNextOrder}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Step</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ಹಂತ" : "Next Step"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -1413,23 +1599,32 @@ export default function GamesTab({
               {activeGameId === 'map_landmarks' && (
                 <div className="space-y-6">
                   <div className="flex justify-between items-center pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-primary">MAP GEOGRAPHY — STEP {gameState.currentStep + 1} OF {mapLandmarksQuestions.length}</span>
-                    <span className="text-xs font-bold text-slate-400">Score: {gameState.score}</span>
+                    <span className="text-xs font-bold text-primary">
+                      {lang === 'kn'
+                        ? `ನಕ್ಷೆ ಭೂಗೋಳ — ಹಂತ ${gameState.currentStep + 1} / ${mapLandmarksQuestions.length}`
+                        : `MAP GEOGRAPHY — STEP ${gameState.currentStep + 1} OF ${mapLandmarksQuestions.length}`
+                      }
+                    </span>
+                    <span className="text-xs font-bold text-slate-400">
+                      {lang === 'kn' ? `ಅಂಕ: ${gameState.score}` : `Score: ${gameState.score}`}
+                    </span>
                   </div>
 
                   <div className="bg-rose-50/20 border border-rose-100 rounded-2xl p-6 text-center space-y-2 relative overflow-hidden">
                     <div className="absolute -right-4 -bottom-4 opacity-5 pointer-events-none">
                       <MapPin className="w-24 h-24 text-rose-900" />
                     </div>
-                    <p className="text-[10px] text-rose-600 font-extrabold uppercase">Spot the Location:</p>
+                    <p className="text-[10px] text-rose-600 font-extrabold uppercase">
+                      {lang === 'kn' ? "ಸ್ಥಳವನ್ನು ಗುರುತಿಸಿ:" : "Spot the Location:"}
+                    </p>
                     <p className="font-serif text-sm md:text-base text-slate-800 font-semibold max-w-xl mx-auto">
-                      "{mapLandmarksQuestions[gameState.currentStep].landmark}"
+                      "{lang === 'kn' ? mapLandmarksQuestionsKn[gameState.currentStep].landmarkKn : mapLandmarksQuestions[gameState.currentStep].landmark}"
                     </p>
                   </div>
 
                   {!mapFeedback ? (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {mapLandmarksQuestions[gameState.currentStep].options.map((opt, idx) => (
+                      {(lang === 'kn' ? mapLandmarksQuestionsKn[gameState.currentStep].optionsKn : mapLandmarksQuestions[gameState.currentStep].options).map((opt, idx) => (
                         <button
                           key={idx}
                           onClick={() => handleMapAnswer(opt)}
@@ -1442,9 +1637,9 @@ export default function GamesTab({
                   ) : (
                     <div className="space-y-4">
                       <div className={`p-4 rounded-xl text-xs font-bold flex items-center gap-2 ${
-                        mapFeedback.includes("perfect") ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
+                        (mapFeedback.includes("perfect") || mapFeedback.includes("ಪರಿಪೂರ್ಣ")) ? 'bg-emerald-50 text-emerald-800' : 'bg-red-50 text-red-800'
                       }`}>
-                        {mapFeedback.includes("perfect") ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
+                        {(mapFeedback.includes("perfect") || mapFeedback.includes("ಪರಿಪೂರ್ಣ")) ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5 text-red-600" />}
                         {mapFeedback}
                       </div>
 
@@ -1452,7 +1647,7 @@ export default function GamesTab({
                         onClick={handleNextMap}
                         className="px-6 py-2.5 bg-primary text-white rounded-xl font-bold text-xs hover:brightness-110 shadow cursor-pointer flex items-center gap-1.5"
                       >
-                        <span>Next Step</span>
+                        <span>{lang === 'kn' ? "ಮುಂದಿನ ಹಂತ" : "Next Step"}</span>
                         <ArrowRight className="w-3.5 h-3.5" />
                       </button>
                     </div>

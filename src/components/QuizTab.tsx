@@ -311,18 +311,29 @@ export default function QuizTab({
           <div className="space-y-2">
             <div className="flex items-center gap-2 text-primary">
               <Gamepad2 className="w-5 h-5" />
-              <span className="text-xs font-bold uppercase tracking-wider">Interactive Quest Board</span>
+              <span className="text-xs font-bold uppercase tracking-wider">
+                {lang === 'kn' ? "ಸಂವಾದಾತ್ಮಕ ಕ್ವೆಸ್ಟ್ ಬೋರ್ಡ್" : "Interactive Quest Board"}
+              </span>
             </div>
-            <h1 className="font-serif text-3xl font-bold text-primary tracking-tight">Select Scripture Mission</h1>
+            <h1 className="font-serif text-3xl font-bold text-primary tracking-tight">
+              {lang === 'kn' ? "ಧರ್ಮಗ್ರಂಥದ ಕಾರ್ಯವನ್ನು ಆರಿಸಿ" : "Select Scripture Mission"}
+            </h1>
             <p className="text-xs md:text-sm text-on-surface-variant font-medium max-w-xl">
-              Complete dynamic quests, earn experience points (XP) to level up your traveler rank, and gain gold coins to unlock hints!
+              {lang === 'kn' 
+                ? "ವಿವಿಧ ಅನ್ವೇಷಣೆಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿ, ನಿಮ್ಮ ಶ್ರೇಣಿಯನ್ನು ಹೆಚ್ಚಿಸಲು XP ಸಂಪಾದಿಸಿ ಮತ್ತು ಸುಳಿವುಗಳನ್ನು ಅನ್ಲಾಕ್ ಮಾಡಲು ಚಿನ್ನದ ನಾಣ್ಯಗಳನ್ನು ಪಡೆಯಿರಿ!" 
+                : "Complete dynamic quests, earn experience points (XP) to level up your traveler rank, and gain gold coins to unlock hints!"}
             </p>
           </div>
+
           <div className="flex items-center gap-3 bg-white px-5 py-3 rounded-2xl border border-outline-variant/30 shadow-sm">
             <Trophy className="w-5 h-5 text-secondary" />
             <div>
-              <p className="text-[10px] text-outline font-bold uppercase">Current Rank</p>
-              <p className="font-serif text-sm font-bold text-primary">Level {stats.level} Explorer</p>
+              <p className="text-[10px] text-outline font-bold uppercase">
+                {lang === 'kn' ? "ಪ್ರಸ್ತುತ ಶ್ರೇಣಿ" : "Current Rank"}
+              </p>
+              <p className="font-serif text-sm font-bold text-primary">
+                {lang === 'kn' ? `ಮಟ್ಟ ${stats.level} ಪರಿಶೋಧಕ` : `Level ${stats.level} Explorer`}
+              </p>
             </div>
           </div>
         </div>
@@ -348,9 +359,13 @@ export default function QuizTab({
               >
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <span className="text-[10px] font-bold text-outline">MISSION {level.levelNumber}</span>
+                    <span className="text-[10px] font-bold text-outline">
+                      {lang === 'kn' ? `ಕಾರ್ಯ ${level.levelNumber}` : `MISSION ${level.levelNumber}`}
+                    </span>
                     <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${diffColor}`}>
-                      {level.difficulty}
+                      {lang === 'kn' 
+                        ? (level.difficulty === 'Easy' ? 'ಸುಲಭ' : level.difficulty === 'Medium' ? 'ಮಧ್ಯಮ' : level.difficulty === 'Hard' ? 'ಕಠಿಣ' : 'ತಜ್ಞ') 
+                        : level.difficulty}
                     </span>
                   </div>
 
@@ -378,7 +393,7 @@ export default function QuizTab({
                   {isLocked ? (
                     <div className="flex items-center justify-center gap-2 py-3 bg-slate-100 text-slate-400 rounded-xl font-bold text-xs">
                       <Lock className="w-4 h-4" />
-                      Requires Level {level.requiredLevel}
+                      {lang === 'kn' ? `ಮಟ್ಟ ${level.requiredLevel} ಅಗತ್ಯವಿದೆ` : `Requires Level ${level.requiredLevel}`}
                     </div>
                   ) : (
                     <button
@@ -386,7 +401,7 @@ export default function QuizTab({
                       className="w-full py-3 bg-primary text-white rounded-xl font-bold text-xs hover:bg-primary/90 hover:shadow-md active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                     >
                       <Play className="w-3.5 h-3.5 fill-white" />
-                      Start Quest
+                      {lang === 'kn' ? "ಕಾರ್ಯ ಪ್ರಾರಂಭಿಸಿ" : "Start Quest"}
                     </button>
                   )}
                 </div>
@@ -407,23 +422,35 @@ export default function QuizTab({
             <Award className="w-12 h-12 fill-gold-accent" />
           </div>
 
-          <h2 className="font-serif text-3xl md:text-4xl text-primary font-bold mb-2">Quest Completed!</h2>
-          <p className="text-on-surface-variant font-medium mb-6">Awesome efforts on completing {quizTitle}!</p>
+          <h2 className="font-serif text-3xl md:text-4xl text-primary font-bold mb-2">
+            {lang === 'kn' ? "ಕಾರ್ಯ ಯಶಸ್ವಿಯಾಗಿ ಪೂರ್ಣಗೊಂಡಿದೆ!" : "Quest Completed!"}
+          </h2>
+          <p className="text-on-surface-variant font-medium mb-6">
+            {lang === 'kn' 
+              ? `${quizTitle} ಅನ್ನು ಯಶಸ್ವಿಯಾಗಿ ಮುಗಿಸಿದ್ದಕ್ಕಾಗಿ ಅಭಿನಂದನೆಗಳು!` 
+              : `Awesome efforts on completing ${quizTitle}!`}
+          </p>
 
           <div className="grid grid-cols-3 gap-4 mb-8 bg-surface-container-low/40 p-5 rounded-2xl border border-outline-variant/20">
             <div className="text-center">
-              <p className="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Score</p>
+              <p className="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">
+                {lang === 'kn' ? "ಅಂಕಗಳು" : "Score"}
+              </p>
               <p className="text-xl md:text-2xl font-bold text-primary">{quizCorrectAnswersCount} / {questions.length}</p>
             </div>
             <div className="text-center border-x border-outline-variant/20">
-              <p className="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">XP Earned</p>
+              <p className="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">
+                {lang === 'kn' ? "ಗಳಿಸಿದ XP" : "XP Earned"}
+              </p>
               <p className="text-xl md:text-2xl font-bold text-secondary flex items-center justify-center gap-1">
                 <Sparkles className="w-4 h-4 text-secondary fill-secondary" />
                 +{xpEarned + activeLevel.xpReward}
               </p>
             </div>
             <div className="text-center">
-              <p className="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">Coins Earned</p>
+              <p className="text-[10px] text-outline font-bold uppercase tracking-wider mb-1">
+                {lang === 'kn' ? "ಗಳಿಸಿದ ನಾಣ್ಯಗಳು" : "Coins Earned"}
+              </p>
               <p className="text-xl md:text-2xl font-bold text-gold-accent flex items-center justify-center gap-1">
                 <Coins className="w-4 h-4 text-gold-accent fill-gold-accent" />
                 +{coinsEarned + activeLevel.coinReward}
@@ -437,7 +464,7 @@ export default function QuizTab({
               className="w-full sm:w-auto px-8 py-3 bg-white border border-slate-200 hover:border-primary/40 rounded-full text-on-surface-variant hover:text-primary font-bold text-sm cursor-pointer transition-colors flex items-center justify-center gap-2"
             >
               <RotateCcw className="w-4 h-4" />
-              Play Again
+              {lang === 'kn' ? "ಮತ್ತೆ ಆಡಿ" : "Play Again"}
             </button>
             <button 
               onClick={() => {
@@ -446,7 +473,7 @@ export default function QuizTab({
               }}
               className="w-full sm:w-auto px-10 py-3 bg-primary text-white rounded-full font-bold text-sm hover:brightness-110 shadow-lg cursor-pointer flex items-center justify-center gap-2"
             >
-              Back to Level Missions
+              {lang === 'kn' ? "ಮಟ್ಟದ ಕಾರ್ಯಗಳಿಗೆ ಹಿಂತಿರುಗಿ" : "Back to Level Missions"}
               <ArrowRight className="w-4 h-4" />
             </button>
           </div>
@@ -505,7 +532,9 @@ export default function QuizTab({
           <div>
             <h2 className="text-sm md:text-base font-bold text-primary">{quizTitle}</h2>
             <p className="text-on-surface-variant text-[10px] md:text-xs font-semibold">
-              Question {currentQuestionIndex + 1} of {questions.length}
+              {lang === 'kn' 
+                ? `ಪ್ರಶ್ನೆ ${currentQuestionIndex + 1} / ${questions.length}` 
+                : `Question ${currentQuestionIndex + 1} of ${questions.length}`}
             </p>
           </div>
         </div>
@@ -513,7 +542,9 @@ export default function QuizTab({
         {/* Progress bar level indicator */}
         <div className="flex-grow max-w-xs w-full px-4">
           <div className="flex justify-between mb-1">
-            <span className="text-[10px] font-bold text-on-surface-variant">QUIZ PROGRESS</span>
+            <span className="text-[10px] font-bold text-on-surface-variant">
+              {lang === 'kn' ? "ರಸಪ್ರಶ್ನೆಯ ಪ್ರಗತಿ" : "QUIZ PROGRESS"}
+            </span>
             <span className="text-[10px] font-bold text-primary">{currentQuestionIndex + 1} / {questions.length}</span>
           </div>
           <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
@@ -532,7 +563,7 @@ export default function QuizTab({
         >
           <Languages className="w-4 h-4 text-[20px]" />
           <span id="lang-toggle-text">
-            {lang === 'en' ? 'Kannada' : 'Show English Only'}
+            {lang === 'en' ? 'ಕನ್ನಡ (Kannada)' : 'English'}
           </span>
         </button>
       </section>
@@ -611,7 +642,11 @@ export default function QuizTab({
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm transition-colors duration-200 ${badgeStyle}`}>
                       {letter}
                     </div>
-                    <span className="text-sm font-semibold text-on-surface">{option.text}</span>
+                    <span className="text-sm font-semibold text-on-surface">
+                      {lang === 'kn' && currentQuestion.optionsKannada 
+                        ? currentQuestion.optionsKannada[option.originalIndex] 
+                        : option.text}
+                    </span>
                   </div>
                   {iconElement}
                 </button>
@@ -625,7 +660,7 @@ export default function QuizTab({
               onClick={handleSkipQuestion}
               className="w-full sm:w-auto px-8 py-3 rounded-full border border-slate-200 hover:border-primary/40 text-on-surface-variant hover:text-primary font-bold text-xs transition-colors cursor-pointer bg-white"
             >
-              Skip Question
+              {lang === 'kn' ? "ಪ್ರಶ್ನೆ ಬಿಟ್ಟುಬಿಡು" : "Skip Question"}
             </button>
             
             <div className="flex items-center gap-4 w-full sm:w-auto">
@@ -636,7 +671,7 @@ export default function QuizTab({
                 title="Eliminate two wrong answers"
               >
                 <Lightbulb className="w-4 h-4 text-amber-500" />
-                Hint
+                {lang === 'kn' ? "ಸುಳಿವು" : "Hint"}
                 <span className="flex items-center gap-0.5 ml-2 px-2 py-0.5 bg-slate-200 text-slate-700 text-[10px] rounded-lg">
                   <Coins className="w-3 h-3 fill-slate-500 text-slate-500" /> 5
                 </span>
@@ -648,14 +683,16 @@ export default function QuizTab({
                   disabled={selectedShuffledIndex === null}
                   className="flex-grow sm:flex-grow-0 px-10 py-3 rounded-full bg-primary text-white font-bold text-xs hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none active:scale-95 transition-all cursor-pointer"
                 >
-                  Confirm Answer
+                  {lang === 'kn' ? "ಉತ್ತರ ದೃಢೀಕರಿಸಿ" : "Confirm Answer"}
                 </button>
               ) : (
                 <button 
                   onClick={handleNextQuestion}
                   className="flex-grow sm:flex-grow-0 px-10 py-3 rounded-full bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 hover:shadow-lg active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1.5"
                 >
-                  {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Finish Quiz'}
+                  {currentQuestionIndex < questions.length - 1 
+                    ? (lang === 'kn' ? "ಮುಂದಿನ ಪ್ರಶ್ನೆ" : "Next Question") 
+                    : (lang === 'kn' ? "ರಸಪ್ರಶ್ನೆ ಮುಗಿಸಿ" : "Finish Quiz")}
                   <ArrowRight className="w-4 h-4" />
                 </button>
               )}
@@ -668,21 +705,25 @@ export default function QuizTab({
           <div className="glass-panel rounded-3xl p-6 border-l-4 border-red-500 bg-white shadow-sm">
             <div className="flex justify-between items-start mb-4">
               <div>
-                <h4 className="font-bold text-sm text-on-surface">Daily Streak</h4>
-                <p className="text-[10px] text-on-surface-variant font-semibold font-sans">Keep playing to maintain your streak!</p>
+                <h4 className="font-bold text-sm text-on-surface">
+                  {lang === 'kn' ? "ದೈನಂದಿನ ಸರಪಳಿ" : "Daily Streak"}
+                </h4>
+                <p className="text-[10px] text-on-surface-variant font-semibold font-sans">
+                  {lang === 'kn' ? "ನಿಮ್ಮ ಸರಪಳಿಯನ್ನು ಕಾಯ್ದುಕೊಳ್ಳಲು ಆಟ ಮುಂದುವರಿಸಿ!" : "Keep playing to maintain your streak!"}
+                </p>
               </div>
               <Flame className="w-8 h-8 fill-red-500 text-red-500" />
             </div>
 
             <div className="flex justify-between gap-2">
               {[
-                { day: 'M', checked: true },
-                { day: 'T', checked: true },
-                { day: 'W', checked: false, text: String(stats.streak) },
-                { day: 'T', checked: false },
-                { day: 'F', checked: false },
-                { day: 'S', checked: false },
-                { day: 'S', checked: false }
+                { day: lang === 'kn' ? 'ಸೋ' : 'M', checked: true },
+                { day: lang === 'kn' ? 'ಮಂ' : 'T', checked: true },
+                { day: lang === 'kn' ? 'ಬು' : 'W', checked: false, text: String(stats.streak) },
+                { day: lang === 'kn' ? 'ಗು' : 'T', checked: false },
+                { day: lang === 'kn' ? 'ಶು' : 'F', checked: false },
+                { day: lang === 'kn' ? 'ಶ' : 'S', checked: false },
+                { day: lang === 'kn' ? 'ಭಾ' : 'S', checked: false }
               ].map((item, idx) => (
                 <div key={idx} className="flex flex-col items-center gap-1">
                   <span className="text-[10px] text-on-surface-variant font-bold">{item.day}</span>
@@ -699,15 +740,21 @@ export default function QuizTab({
           </div>
 
           <div className="glass-panel rounded-3xl p-6 bg-white shadow-sm border border-slate-150">
-            <h4 className="font-bold text-sm text-on-surface mb-4">Active Level Bonuses</h4>
+            <h4 className="font-bold text-sm text-on-surface mb-4">
+              {lang === 'kn' ? "ಸಕ್ರಿಯ ಮಟ್ಟದ ಬೋನಸ್‌ಗಳು" : "Active Level Bonuses"}
+            </h4>
             <div className="space-y-4">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center border border-emerald-100 shadow-sm">
                   <Sparkles className="w-5 h-5 text-emerald-500 fill-emerald-100" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold">Mission Completion XP</p>
-                  <p className="text-[10px] text-slate-500 font-semibold">+{activeLevel.xpReward} XP payout</p>
+                  <p className="text-xs font-bold">
+                    {lang === 'kn' ? "ಕಾರ್ಯ ಪೂರ್ಣಗೊಂಡ XP" : "Mission Completion XP"}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-semibold">
+                    {lang === 'kn' ? `+${activeLevel.xpReward} XP ಪಾವತಿ` : `+${activeLevel.xpReward} XP payout`}
+                  </p>
                 </div>
               </div>
 
@@ -716,8 +763,12 @@ export default function QuizTab({
                   <Coins className="w-5 h-5 text-amber-500 fill-amber-100 animate-pulse" />
                 </div>
                 <div>
-                  <p className="text-xs font-bold">Mission Completion Coins</p>
-                  <p className="text-[10px] text-slate-500 font-semibold">+{activeLevel.coinReward} Gold coins</p>
+                  <p className="text-xs font-bold">
+                    {lang === 'kn' ? "ಕಾರ್ಯ ಪೂರ್ಣಗೊಂಡ ನಾಣ್ಯಗಳು" : "Mission Completion Coins"}
+                  </p>
+                  <p className="text-[10px] text-slate-500 font-semibold">
+                    {lang === 'kn' ? `+${activeLevel.coinReward} ಚಿನ್ನದ ನಾಣ್ಯಗಳು` : `+${activeLevel.coinReward} Gold coins`}
+                  </p>
                 </div>
               </div>
             </div>

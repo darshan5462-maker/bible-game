@@ -34,6 +34,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Where was Jesus born?",
         questionKannada: "ಯೇಸು ಎಲ್ಲಿ ಹುಟ್ಟಿದನು?",
         options: ["Nazareth", "Bethlehem", "Jerusalem", "Jericho"],
+        optionsKannada: ["ನಜರೇತ್", "ಬೆತ್ಲೆಹೇಮ್", "ಯೆರೂಸಲೇಮ್", "ಯೆರಿಕೋ"],
         correctIndex: 1,
         topic: "The Nativity",
         difficulty: "Easy"
@@ -43,6 +44,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Who was the mother of Jesus?",
         questionKannada: "ಯೇಸುವಿನ ತಾಯಿ ಯಾರು?",
         options: ["Elizabeth", "Mary", "Martha", "Salome"],
+        optionsKannada: ["ಎಲಿಸಬೆತ್", "ಮರಿಯ", "ಮಾರ್ಥಳು", "ಸಲೋಮಿ"],
         correctIndex: 1,
         topic: "The Nativity",
         difficulty: "Easy"
@@ -52,6 +54,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What did the wise men follow to find baby Jesus?",
         questionKannada: "ಜ್ಞಾನಿಗಳು ಬಾಲ ಯೇಸುವನ್ನು ಹುಡುಕಲು ಏನನ್ನು ಅನುಸರಿಸಿದರು?",
         options: ["A bright star", "A flying dove", "A mountain path", "A dry riverbed"],
+        optionsKannada: ["ಪ್ರಕಾಶಮಾನವಾದ ನಕ್ಷತ್ರ", "ಹಾರುವ ಪಾರಿವಾಳ", "ಪರ್ವತದ ಹಾದಿ", "ಒಣಗಿದ ನದಿ"],
         correctIndex: 0,
         topic: "The Nativity",
         difficulty: "Easy"
@@ -61,6 +64,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Which country did Mary and Joseph flee to with baby Jesus to escape King Herod?",
         questionKannada: "ಹೆರೋದ ರಾಜನಿಂದ ತಪ್ಪಿಸಿಕೊಳ್ಳಲು ಮರಿಯ ಮತ್ತು ಯೋಸೇಫರು ಬಾಲ ಯೇಸುವಿನೊಂದಿಗೆ ಯಾವ ದೇಶಕ್ಕೆ ಓಡಿಹೋದರು?",
         options: ["Rome", "Damascus", "Egypt", "Athens"],
+        optionsKannada: ["ರೋಮ್", "ದಮಸ್ಕಸ್", "ಈಜಿಪ್ಟ್", "ಅಥೆನ್ಸ್"],
         correctIndex: 2,
         topic: "Early Life",
         difficulty: "Easy"
@@ -70,6 +74,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "How old was Jesus when he was found teaching in the Temple in Jerusalem?",
         questionKannada: "ಯೆರೂಸಲೇಮಿನ ಮಂದಿರದಲ್ಲಿ ಬೋಧಿಸುತ್ತಿದ್ದಾಗ ಯೇಸುವಿಗೆ ಎಷ್ಟು ವರ್ಷ ವಯಸ್ಸಾಗಿತ್ತು?",
         options: ["8 years old", "12 years old", "18 years old", "30 years old"],
+        optionsKannada: ["೮ ವರ್ಷ", "೧೨ ವರ್ಷ", "೧೮ ವರ್ಷ", "೩೦ ವರ್ಷ"],
         correctIndex: 1,
         topic: "Early Life",
         difficulty: "Easy"
@@ -94,6 +99,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "How many disciples did Jesus choose as His inner circle?",
         questionKannada: "ಯೇಸು ತನ್ನ ಮುಖ್ಯ ಶಿಷ್ಯರನ್ನಾಗಿ ಎಷ್ಟು ಜನರನ್ನು ಆರಿಸಿಕೊಂಡನು?",
         options: ["10", "12", "70", "3"],
+        optionsKannada: ["೧೦", "೧೨", "೭೦", "೩"],
         correctIndex: 1,
         topic: "The Disciples",
         difficulty: "Easy"
@@ -103,6 +109,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What was the profession of Simon Peter before he followed Jesus?",
         questionKannada: "ಸೀಮೋನ ಪೇತ್ರನು ಯೇಸುವನ್ನು ಅನುಸರಿಸುವ ಮೊದಲು ಅವನ ವೃತ್ತಿ ಏನಾಗಿತ್ತು?",
         options: ["Tax collector", "Fisherman", "Carpenter", "Tentmaker"],
+        optionsKannada: ["ತೆರಿಗೆ ವಸೂಲಿಗಾರ", "ಮೀನುಗಾರ", "ಬಡಗಿ", "ಡೇರೆ ತಯಾರಕ"],
         correctIndex: 1,
         topic: "The Disciples",
         difficulty: "Easy"
@@ -112,6 +119,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Which disciple was a tax collector before being called by Jesus?",
         questionKannada: "ಯೇಸು ಕರೆಯುವ ಮೊದಲು ತೆರಿಗೆ ವಸೂಲಿಗಾರನಾಗಿದ್ದ ಶಿಷ್ಯ ಯಾರು?",
         options: ["Matthew", "John", "Judas", "Andrew"],
+        optionsKannada: ["ಮತ್ತಾಯ", "ಯೋಹಾನ", "ಯೂದ", "ಅಂದ್ರೆಯ"],
         correctIndex: 0,
         topic: "The Disciples",
         difficulty: "Medium"
@@ -121,6 +129,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Who was the first disciple to follow Jesus, and brought his brother Peter to Him?",
         questionKannada: "ಯೇಸುವನ್ನು ಅನುಸರಿಸಿದ ಮೊದಲ ಶಿಷ್ಯ ಯಾರು, ಮತ್ತು ತನ್ನ ಸಹೋದರ ಪೇತ್ರನನ್ನು ಆತನ ಬಳಿಗೆ ಕರೆತಂದವರು ಯಾರು?",
         options: ["Philip", "Thomas", "Andrew", "James"],
+        optionsKannada: ["ಫಿಲಿಪ್ಪ", "ತೋಮ", "ಅಂದ್ರೆಯ", "ಯಾಕೋಬ"],
         correctIndex: 2,
         topic: "The Disciples",
         difficulty: "Medium"
@@ -130,6 +139,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Which disciple doubted Jesus' resurrection until he saw the nail marks?",
         questionKannada: "ಯೇಸುವಿನ ಉಜ್ಜೀವನವನ್ನು ಮೊಳೆಗಳ ಗುರುತುಗಳನ್ನು ನೋಡುವವರೆಗೂ ನಂಬದ ಶಿಷ್ಯ ಯಾರು?",
         options: ["Judas", "Thomas", "Peter", "Bartholomew"],
+        optionsKannada: ["ಯೂದ", "ತೋಮ", "ಪೇತ್ರ", "ಬಾರ್ತಲೋಮಯ"],
         correctIndex: 1,
         topic: "The Disciples",
         difficulty: "Medium"
@@ -154,6 +164,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "In the Parable of the Sower, what does the seed represent?",
         questionKannada: "ಬಿತ್ತುವವನ ಸಾಮ್ಯದಲ್ಲಿ ಬಿತ್ತಿದ ಬೀಜವು ಏನನ್ನು ಸೂಚಿಸುತ್ತದೆ?",
         options: ["Money", "People", "The Word of God", "Faith"],
+        optionsKannada: ["ಹಣ", "ಜನರು", "ದೇವರ ವಾಕ್ಯ", "ನಂಬಿಕೆ"],
         correctIndex: 2,
         topic: "Parables",
         difficulty: "Medium"
@@ -163,6 +174,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Who helped the beaten traveler in the famous parable of mercy?",
         questionKannada: "ದಯೆಯ ಪ್ರಸಿದ್ಧ ಸಾಮ್ಯದಲ್ಲಿ ಪೆಟ್ಟು ತಿಂದ ದಾರಿಕಾರನಿಗೆ ಸಹಾಯ ಮಾಡಿದವರು ಯಾರು?",
         options: ["The Priest", "The Levite", "The Good Samaritan", "The Innkeeper"],
+        optionsKannada: ["ಯಾಜಕ", "ಲೇವಿಯ", "ಒಳ್ಳೆಯ ಸಮಾರ್ಯದವನು", "ಛತ್ರದವನು"],
         correctIndex: 2,
         topic: "Parables",
         difficulty: "Easy"
@@ -172,6 +184,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What did the loving father do when the Prodigal Son finally returned home?",
         questionKannada: "ಪೋಕರಿ ಮಗನು ಕೊನೆಗೂ ಮನೆಗೆ ಹಿಂದಿರುಗಿದಾಗ ಪ್ರೀತಿಯ ತಂದೆ ಏನು ಮಾಡಿದನು?",
         options: ["He banished him", "He ran and embraced him", "He made him a slave", "He ignored him"],
+        optionsKannada: ["ಅವನನ್ನು ಹೊರಹಾಕಿದನು", "ಓಡಿಹೋಗಿ ತಬ್ಬಿಕೊಂಡನು", "ಅವನನ್ನು ಗುಲಾಮನ್ನಾಗಿ ಮಾಡಿದನು", "ಅವನನ್ನು ಅಲಕ್ಷಿಸಿದನು"],
         correctIndex: 1,
         topic: "Parables",
         difficulty: "Medium"
@@ -181,6 +194,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "How many of the ninety-nine sheep did the shepherd leave behind to find the one lost sheep?",
         questionKannada: "ಕಳೆದುಹೋದ ಒಂದು ಕುರಿಯನ್ನು ಹುಡುಕಲು ಕುರುಬನು ಎಷ್ಟು ಕುರಿಗಳನ್ನು ಬಿಟ್ಟು ಹೋದನು?",
         options: ["99 sheep", "50 sheep", "1 sheep", "10 sheep"],
+        optionsKannada: ["೯೯ ಕುರಿಗಳು", "೫೦ ಕುರಿಗಳು", "೧ ಕುರಿ", "೧೦ ಕುರಿಗಳು"],
         correctIndex: 0,
         topic: "Parables",
         difficulty: "Medium"
@@ -190,6 +204,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "In the Parable of the Talents, what did the servant with one talent do with it?",
         questionKannada: "ತಲಾಂತುಗಳ ಸಾಮ್ಯದಲ್ಲಿ, ಒಂದು ತಲಾಂತು ಪಡೆದ ಸೇವಕನು ಅದನ್ನು ಏನು ಮಾಡಿದನು?",
         options: ["He buried it in the ground", "He doubled it", "He spent it on food", "He lost it"],
+        optionsKannada: ["ಮಣ್ಣಿನಲ್ಲಿ ಹೂತಿಟ್ಟನು", "ಅದನ್ನು ದುಪ್ಪಟ್ಟು ಮಾಡಿದನು", "ಹಣವನ್ನು ಊಟಕ್ಕೆ ಬಳಸಿದನು", "ಅದನ್ನು ಕಳೆದುಕೊಂಡನು"],
         correctIndex: 0,
         topic: "Parables",
         difficulty: "Medium"
@@ -214,6 +229,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What was Jesus' first recorded miracle in His ministry?",
         questionKannada: "ಯೇಸುವಿನ ಸೇವೆಯಲ್ಲಿ ದಾಖಲಾದ ಮೊದಲ ಪವಾಡ ಯಾವುದು?",
         options: ["Healing a blind man", "Changing water into wine", "Feeding the 5000", "Calming the storm"],
+        optionsKannada: ["ಕುರುಡನನ್ನು ಗುಣಪಡಿಸುವುದು", "ನೀರನ್ನು ದ್ರಾಕ್ಷಾರಸವಾಗಿ ಬದಲಾಯಿಸುವುದು", "೫೦೦೦ ಜನರಿಗೆ ಉಣಿಸುವುದು", "ಬಿರುಗಾಳಿಯನ್ನು ಅಡಗಿಸುವುದು"],
         correctIndex: 1,
         topic: "Miracles",
         difficulty: "Medium"
@@ -223,6 +239,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Which miracle of Jesus is uniquely recorded in all four Gospels?",
         questionKannada: "ನಾಲ್ಕೂ ಸುವಾರ್ತೆಗಳಲ್ಲಿ ದಾಖಲಾಗಿರುವ ಯೇಸುವಿನ ಪವಾಡ ಯಾವುದು?",
         options: ["Walking on water", "Feeding of the 5000", "Turning water into wine", "Raising Lazarus"],
+        optionsKannada: ["ನೀರಿನ ಮೇಲೆ ನಡೆಯುವುದು", "೫೦೦೦ ಜನರಿಗೆ ಉಣಿಸುವುದು", "ನೀರನ್ನು ದ್ರಾಕ್ಷಾರಸವಾಗಿ ಮಾಡುವುದು", "ಲಾಜರನನ್ನು ಎಬ್ಬಿಸುವುದು"],
         correctIndex: 1,
         topic: "Miracles",
         difficulty: "Hard"
@@ -232,6 +249,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "In what river was Jesus baptized by John?",
         questionKannada: "ಯಾವ ನದಿಯಲ್ಲಿ ಯೇಸು ಯೋಹಾನನಿಂದ ದೀಕ್ಷಾಸ್ನಾನ ಪಡೆದನು?",
         options: ["Nile", "Jordan", "Euphrates", "Tigris"],
+        optionsKannada: ["ನೈಲ್", "ಜೋರ್ಡಾನ್", "ಯೂಫ್ರೇಟೀಸ್", "ಟೈಗ್ರಿಸ್"],
         correctIndex: 1,
         topic: "Miracles",
         difficulty: "Easy"
@@ -241,6 +259,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "How many baskets of leftovers were gathered after feeding the 5,000?",
         questionKannada: "ಐದು ಸಾವಿರ ಜನರಿಗೆ ಉಣಿಸಿದ ನಂತರ ಎಷ್ಟು ಬುಟ್ಟಿಗಳಷ್ಟು ಉಳಿಕೆಗಳನ್ನು ಒಟ್ಟುಗೂಡಿಸಲಾಯಿತು?",
         options: ["7 baskets", "12 baskets", "3 baskets", "10 baskets"],
+        optionsKannada: ["೭ ಬುಟ್ಟಿಗಳು", "೧೨ ಬುಟ್ಟಿಗಳು", "೩ ಬುಟ್ಟಿಗಳು", "೧೦ ಬುಟ್ಟಿಗಳು"],
         correctIndex: 1,
         topic: "Miracles",
         difficulty: "Medium"
@@ -250,6 +269,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What did Jesus use to heal the blind man in John chapter 9?",
         questionKannada: "ಯೋಹಾನ 9 ನೇ ಅಧ್ಯಾಯದಲ್ಲಿ ಕುರುಡನನ್ನು ಗುಣಪಡಿಸಲು ಯೇಸು ಏನನ್ನು ಬಳಸಿದನು?",
         options: ["Only water", "Clay made from dirt and spit", "Olive oil", "A branch of hyssop"],
+        optionsKannada: ["ಕೇವಲ ನೀರು", "ಮಣ್ಣು ಮತ್ತು ಉಗುಳಿನಿಂದ ಮಾಡಿದ ಕೆಸರು", "ಒಲೀವ್ ಎಣ್ಣೆ", "ಹಿಸ್ಸೋಪ್ ರೆಂಬೆ"],
         correctIndex: 1,
         topic: "Miracles",
         difficulty: "Hard"
@@ -274,6 +294,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What city did Jesus enter riding on a donkey, celebrated with palm branches?",
         questionKannada: "ತಾಳೆ ಗರಿಗಳೊಂದಿಗೆ ಆಚರಿಸಲ್ಪಟ್ಟ ಯೇಸು ಕತ್ತೆಯ ಮೇಲೆ ಹತ್ತಿ ಪ್ರವೇಶಿಸಿದ ಪವಿತ್ರ ನಗರ ಯಾವುದು?",
         options: ["Nazareth", "Jerusalem", "Capernaum", "Bethlehem"],
+        optionsKannada: ["ನಜರೇತ್", "ಯೆರೂಸಲೇಮ್", "ಕಪೆರ್ನೌಮ್", "ಬೆತ್ಲೆಹೇಮ್"],
         correctIndex: 1,
         topic: "Passion Week",
         difficulty: "Medium"
@@ -283,6 +304,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Which disciple betrayed Jesus for thirty pieces of silver?",
         questionKannada: "ಮೂವತ್ತು ಬೆಳ್ಳಿ ನಾಣ್ಯಗಳಿಗಾಗಿ ಯೇಸುವನ್ನು ದ್ರೋಹ ಮಾಡಿದ ಶಿಷ್ಯ ಯಾರು?",
         options: ["Simon Peter", "Judas Iscariot", "Thomas", "John"],
+        optionsKannada: ["ಸೀಮೋನ ಪೇತ್ರ", "ಯೂದ ಇಸ್ಕರಿಯೋತ", "ತೋಮ", "ಯೋಹಾನ"],
         correctIndex: 1,
         topic: "Passion Week",
         difficulty: "Easy"
@@ -292,6 +314,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "In which garden did Jesus pray in deep agony before His arrest?",
         questionKannada: "ಬಂಧನಕ್ಕೊಳಗಾಗುವ ಮುನ್ನ ಯೇಸು ಅತಿ ದುಃಖದಿಂದ ಪ್ರಾರ್ಥಿಸಿದ ತೋಟ ಯಾವುದು?",
         options: ["Eden", "Gethsemane", "Golgotha", "Carmel"],
+        optionsKannada: ["ಏದೆನ್", "ಗೆತ್ಸೇಮನೆ", "ಗೊಲ್ಗೊಥಾ", "ಕರ್ಮೆಲ್"],
         correctIndex: 1,
         topic: "Passion Week",
         difficulty: "Medium"
@@ -301,6 +324,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "How many times did Simon Peter deny knowing Jesus before the rooster crowed?",
         questionKannada: "ಕೋಳಿ ಕೂಗುವ ಮುನ್ನ ಸೀಮೋನ ಪೇತ್ರನು ಯೇಸುವನ್ನು ತನಗೆ ತಿಳಿಯದೆಂದು ಎಷ್ಟು ಬಾರಿ ನಿರಾಕರಿಸಿದನು?",
         options: ["Once", "Twice", "Three times", "Seven times"],
+        optionsKannada: ["ಒಂದು ಬಾರಿ", "ಎರಡು ಬಾರಿ", "ಮೂರು ಬಾರಿ", "ಏಳು ಬಾರಿ"],
         correctIndex: 2,
         topic: "Passion Week",
         difficulty: "Medium"
@@ -310,6 +334,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What was the final statement of Jesus on the cross recorded in John 19:30?",
         questionKannada: "ಯೋಹಾನ 19:30 ರಲ್ಲಿ ದಾಖಲಾಗಿರುವ ಯೇಸುವಿನ ಕೊನೆಯ ಮಾತು ಯಾವುದು?",
         options: ["\"It is finished\"", "\"My God, why have you forsaken me?\"", "\"Father, forgive them\"", "\"Into your hands I commit my spirit\""],
+        optionsKannada: ["\"ಎಲ್ಲಾ ಮುಗಿಯಿತು\"", "\"ನನ್ನ ದೇವರೇ, ನನ್ನ ದೇವರೇ, ನನ್ನನ್ನು ಏಕೆ ಕೈಬಿಟ್ಟೆ?\"", "\"ತಂದೆಯೇ, ಇವರನ್ನು ಕ್ಷಮಿಸು\"", "\"ತಂದೆಯೇ, ನಿನ್ನ ಕೈಯಲ್ಲಿ ನನ್ನ ಆತ್ಮವನ್ನು ಒಪ್ಪಿಸಿಕೊಡುತ್ತೇನೆ\""],
         correctIndex: 0,
         topic: "Passion Week",
         difficulty: "Hard"
@@ -334,6 +359,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Who was the first person to see the risen Jesus near the empty tomb?",
         questionKannada: "ಖಾಲಿ ಸಮಾಧಿಯ ಬಳಿ ಎದ್ದ ಯೇಸುವನ್ನು ನೋಡಿದ ಮೊದಲ ವ್ಯಕ್ತಿ ಯಾರು?",
         options: ["Simon Peter", "Mary Magdalene", "John", "Mother Mary"],
+        optionsKannada: ["ಸೀಮೋನ ಪೇತ್ರ", "ಮರಿಯ ಮಗ್ದಲೇನೆ", "ಯೋಹಾನ", "ತಾಯಿ ಮರಿಯಳು"],
         correctIndex: 1,
         topic: "Resurrection",
         difficulty: "Medium"
@@ -343,6 +369,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "For how many days did Jesus appear to His disciples before His Ascension?",
         questionKannada: "ಯೇಸು ಪರಲೋಕಕ್ಕೆ ಏರಿಹೋಗುವ ಮುನ್ನ ತನ್ನ ಶಿಷ್ಯರಿಗೆ ಎಷ್ಟು ದಿನಗಳ ಕಾಲ ಕಾಣಿಸಿಕೊಂಡನು?",
         options: ["7 days", "12 days", "40 days", "50 days"],
+        optionsKannada: ["೭ ದಿನಗಳು", "೧೨ ದಿನಗಳು", "೪೦ ದಿನಗಳು", "೫೦ ದಿನಗಳು"],
         correctIndex: 2,
         topic: "Resurrection",
         difficulty: "Hard"
@@ -352,6 +379,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "What major event took place fifty days after Easter, marked by wind and tongues of fire?",
         questionKannada: "ಈಸ್ಟರ್ ಹಬ್ಬದ ನಂತರ ಐವತ್ತನೆಯ ದಿನ ನಡೆದ, ಬಿರುಗಾಳಿ ಮತ್ತು ಅಗ್ನಿನಾಲಿಗೆಗಳಿಂದ ಗುರುತಿಸಲ್ಪಟ್ಟ ಪವಿತ್ರ ದಿನ ಯಾವುದು?",
         options: ["The Ascension", "The Transfiguration", "The Pentecost", "The Passover"],
+        optionsKannada: ["ಆರೋಹಣ", "ರೂಪಾಂತರ", "ಪೆಂಟೆಕೋಸ್ಟ್", "ಪಸ್ಕ ಹಬ್ಬ"],
         correctIndex: 2,
         topic: "Early Church",
         difficulty: "Hard"
@@ -361,6 +389,7 @@ export const QUIZ_LEVELS: QuizLevel[] = [
         question: "Which prosecutor of the early Church was blinded by a light on the road to Damascus and became an apostle?",
         questionKannada: "ಆದಿ ಸಭೆಯನ್ನು ಹಿಂಸಿಸುತ್ತಿದ್ದ, ದಮಸ್ಕಸ್ ಹಾದಿಯಲ್ಲಿ ಕುರುಡನಾಗಿ ನಂತರ ಅಪೊಸ್ತಲನಾಗಿ ಬದಲಾದವರು ಯಾರು?",
         options: ["Saul (Paul)", "Barnabas", "Stephen", "Cornelius"],
+        optionsKannada: ["ಸೌಲ (ಪೌಲ)", "ಬಾರ್ನಬ", "ಸ್ತೇಫನ", "ಕೊರ್ನೇಲ್ಯ"],
         correctIndex: 0,
         topic: "Early Church",
         difficulty: "Medium"
@@ -368,8 +397,9 @@ export const QUIZ_LEVELS: QuizLevel[] = [
       {
         id: 605,
         question: "In which city were the believers first called \"Christians\"?",
-        questionKannada: "ವಿಶ್ವಾಸಿಗಳನ್ನು ಮೊದಲ ಬಾರಿಗೆ \"ಕ್ರೈಸ್ತರು\" ಎಂದು ಯಾವ ನಗರದಲ್ಲಿ ಕರೆಯಲಾಯಿತು?",
+        questionKannada: "ವಿಶ್ವಾಸಿಗಳನ್ನು ಮೊದಲ ಬารಿಗೆ \"ಕ್ರೈಸ್ತರು\" ಎಂದು ಯಾವ ನಗರದಲ್ಲಿ ಕರೆಯಲಾಯಿತು?",
         options: ["Rome", "Jerusalem", "Antioch", "Ephesus"],
+        optionsKannada: ["ರೋಮ್", "ಯೆರೂಸಲೇಮ್", "ಅಂತಿಯೋಕ್ಯ", "ಎಫೆಸ"],
         correctIndex: 2,
         topic: "Early Church",
         difficulty: "Hard"

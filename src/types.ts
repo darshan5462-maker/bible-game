@@ -24,6 +24,7 @@ export interface Question {
   question: string;
   questionKannada?: string;
   options: string[];
+  optionsKannada?: string[];
   correctIndex: number;
   topic: string;
   difficulty: 'Easy' | 'Medium' | 'Hard';
