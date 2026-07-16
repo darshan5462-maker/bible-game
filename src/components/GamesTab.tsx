@@ -25,6 +25,18 @@ import {
   Lock,
   MessageSquare
 } from 'lucide-react';
+import {
+  charFindQuestions,
+  matchRounds,
+  scrambleVerses,
+  riddles,
+  guessWords,
+  tfQuestions,
+  blanksQuestions,
+  oddOneQuestions,
+  bookOrderQuestions,
+  mapLandmarksQuestions
+} from '../data/gamesData';
 
 interface GamesTabProps {
   stats: UserStats;
@@ -279,192 +291,33 @@ export default function GamesTab({
   };
 
   // --- SUB-GAME STATES DECLARATIONS ---
-  
-  // 1. Character Finding state
-  const charFindQuestions = [
-    {
-      target: "Joseph",
-      clues: [
-        "I was sold into slavery by my brothers for twenty pieces of silver.",
-        "I interpreted Pharaoh's dreams about seven years of abundance and seven years of famine.",
-        "God blessed me to become a ruler in Egypt, second only to Pharaoh."
-      ],
-      options: ["Joseph", "Moses", "David", "Daniel"]
-    },
-    {
-      target: "Samson",
-      clues: [
-        "I was dedicated to God as a Nazirite from my birth.",
-        "I slew a lion with my bare hands and carried away the city gates of Gaza.",
-        "My long hair was the source of my great strength, which Delilah betrayed."
-      ],
-      options: ["Gideon", "Samson", "Joshua", "Solomon"]
-    },
-    {
-      target: "Deborah",
-      clues: [
-        "I am the only female judge of pre-monarchic Israel in the Old Testament.",
-        "I sat under my palm tree between Ramah and Bethel to resolve disputes.",
-        "I summoned Barak to lead an army of 10,000 men against the Canaanites."
-      ],
-      options: ["Esther", "Ruth", "Deborah", "Mary Magdalene"]
-    }
-  ];
   const [charCluesShown, setCharCluesShown] = useState<number>(1);
   const [charFeedback, setCharFeedback] = useState<string | null>(null);
 
-  // 2. Word Matching state
-  const matchRounds = [
-    {
-      pairs: [
-        { term: "Manna", def: "Bread from heaven provided in the wilderness" },
-        { term: "Gethsemane", def: "Garden where Jesus prayed before His arrest" },
-        { term: "Golgotha", def: "The hill of crucifixion, meaning Place of Skull" },
-        { term: "Sinai", def: "Mountain where Moses received the Commandments" }
-      ]
-    },
-    {
-      pairs: [
-        { term: "Jordan River", def: "Waters parted by Joshua & where Jesus was baptized" },
-        { term: "Patmos", def: "Island where Apostle John received the Revelation" },
-        { term: "Jericho", def: "Ancient city whose walls tumbled down by faith" },
-        { term: "Bethlehem", def: "The humble birthplace of King David & Jesus Christ" }
-      ]
-    }
-  ];
   const [selectedTerm, setSelectedTerm] = useState<string | null>(null);
   const [matchedTerms, setMatchedTerms] = useState<string[]>([]);
   const [matchWrong, setMatchWrong] = useState<boolean>(false);
 
-  // 3. Verse Scramble state
-  const scrambleVerses = [
-    {
-      full: "I can do all things through Christ who strengthens me",
-      words: ["Christ", "do", "I", "all", "things", "through", "who", "me", "strengthens", "can"],
-      correctOrder: ["I", "can", "do", "all", "things", "through", "Christ", "who", "strengthens", "me"]
-    },
-    {
-      full: "The Lord is my shepherd I shall not want",
-      words: ["is", "not", "shepherd", "The", "Lord", "I", "my", "shall", "want"],
-      correctOrder: ["The", "Lord", "is", "my", "shepherd", "I", "shall", "not", "want"]
-    }
-  ];
   const [scrambleAnswer, setScrambleAnswer] = useState<string[]>([]);
   const [scrambleFeedback, setScrambleFeedback] = useState<string | null>(null);
 
-  // 4. Who Am I Riddles state
-  const riddles = [
-    {
-      riddle: "I was a tax collector in Jericho. Since I was short, I climbed a sycamore-fig tree to catch a glimpse of Jesus. Who am I?",
-      answer: "Zacchaeus",
-      options: ["Matthew", "Zacchaeus", "Peter", "Luke"]
-    },
-    {
-      riddle: "I walked on water towards Jesus during a fierce lake storm, but started sinking when I looked at the wind and grew afraid. Who am I?",
-      answer: "Peter",
-      options: ["John", "Andrew", "Peter", "Thomas"]
-    },
-    {
-      riddle: "I was the mother of Isaac, giving birth to him in my extremely old age as a miraculous fulfillment of God's promise. Who am I?",
-      answer: "Sarah",
-      options: ["Rebekah", "Rachel", "Sarah", "Hannah"]
-    }
-  ];
   const [riddleFeedback, setRiddleFeedback] = useState<string | null>(null);
 
-  // 5. Word Guess state
-  const guessWords = ["GOLIATH", "BABYLON", "COVENANT", "SOLOMON", "NAZARETH", "EPHESIANS"];
   const [currentGuessWord, setCurrentGuessWord] = useState<string>("");
   const [guessedLetters, setGuessedLetters] = useState<string[]>([]);
   const [livesLeft, setLivesLeft] = useState<number>(6);
 
-  // 6. True or False state
-  const tfQuestions = [
-    { q: "Moses led the Israelites across the Jordan River into the Promised Land.", a: false }, // Joshua did
-    { q: "The New Testament contains 27 books in total.", a: true },
-    { q: "Noah's Ark came to rest on Mount Ararat as the flood waters receded.", a: true },
-    { q: "The Apostle Paul was originally known as Saul of Tarsus.", a: true },
-    { q: "David was the very first king of the nation of Israel.", a: false }, // Saul was
-    { q: "Jesus turned water into wine at the wedding feast in Cana.", a: true },
-    { q: "Judas Iscariot was replaced by Matthias as one of the twelve apostles.", a: true },
-    { q: "Daniel was thrown into a fiery furnace with Shadrach and Meshach.", a: false } // He was thrown in lion's den, his friends in furnace
-  ];
   const [tfIndex, setTfIndex] = useState<number>(0);
   const [tfTimeLeft, setTfTimeLeft] = useState<number>(30);
   const [tfStreak, setTfStreak] = useState<number>(0);
 
-  // 7. Fill in the Blanks state
-  const blanksQuestions = [
-    {
-      sentence: "In the beginning, God created the heavens and the _______.",
-      missing: "earth",
-      options: ["earth", "world", "universe", "seas"]
-    },
-    {
-      sentence: "The fear of the Lord is the beginning of _______.",
-      missing: "wisdom",
-      options: ["knowledge", "life", "wisdom", "righteousness"]
-    },
-    {
-      sentence: "Be strong and _______, do not be afraid or discouraged.",
-      missing: "courageous",
-      options: ["happy", "courageous", "patient", "faithful"]
-    }
-  ];
   const [blanksFeedback, setBlanksFeedback] = useState<string | null>(null);
 
-  // 8. Odd One Out state
-  const oddOneQuestions = [
-    {
-      items: ["Matthew", "Mark", "Genesis", "Luke"],
-      odd: "Genesis",
-      reason: "Genesis is an Old Testament Torah book, while others are New Testament Gospels."
-    },
-    {
-      items: ["David", "Noah", "Saul", "Solomon"],
-      odd: "Noah",
-      reason: "Noah was a patriarch from the Genesis flood narrative, while others were crowned Kings of Israel."
-    },
-    {
-      items: ["Paul", "Peter", "Timothy", "Judas Iscariot"],
-      odd: "Judas Iscariot",
-      reason: "Judas betrayed Jesus and fell from apostle rank, while others served as faithful early church pillars."
-    }
-  ];
   const [oddSelected, setOddSelected] = useState<string | null>(null);
 
-  // 9. Bible Book Order state
-  const bookOrderQuestions = [
-    {
-      initial: ["Numbers", "Genesis", "Exodus", "Leviticus"],
-      correct: ["Genesis", "Exodus", "Leviticus", "Numbers"]
-    },
-    {
-      initial: ["Romans", "Matthew", "Acts", "Revelation"],
-      correct: ["Matthew", "Acts", "Romans", "Revelation"]
-    }
-  ];
   const [currentOrder, setCurrentOrder] = useState<string[]>([]);
   const [orderFeedback, setOrderFeedback] = useState<string | null>(null);
 
-  // 10. Map Landmarks state
-  const mapLandmarksQuestions = [
-    {
-      landmark: "Where did Jesus turn water into wine at a wedding feast?",
-      answer: "Cana",
-      options: ["Cana", "Nazareth", "Jerusalem", "Capernaum"]
-    },
-    {
-      landmark: "Where did the walls collapse after the Israelites marched around them for seven days?",
-      answer: "Jericho",
-      options: ["Jericho", "Babylon", "Nineveh", "Hebron"]
-    },
-    {
-      landmark: "Which river was Jesus baptized in by John the Baptist?",
-      answer: "Jordan River",
-      options: ["Jordan River", "Nile River", "Euphrates River", "Tigris River"]
-    }
-  ];
   const [mapFeedback, setMapFeedback] = useState<string | null>(null);
 
   // Sync sub game initializers
