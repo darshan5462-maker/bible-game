@@ -64,10 +64,39 @@ export default function QuizTab({
   const [timeLeft, setTimeLeft] = useState(30);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizCorrectAnswersCount, setQuizCorrectAnswersCount] = useState(0);
+  const [quizHistory, setQuizHistory] = useState<any[]>([]);
   const [coinsEarned, setCoinsEarned] = useState(0);
   const [xpEarned, setXpEarned] = useState(0);
 
   const currentQuestion = questions[currentQuestionIndex];
+
+  // Load saved progress on mount/quizMode change
+  useEffect(() => {
+    if (!quizMode) return;
+    const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+    const saved = localStorage.getItem(`bible_quest_quiz_progress_${userId}_${quizMode}`);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && typeof parsed.currentQuestionIndex === 'number') {
+          setCurrentQuestionIndex(parsed.currentQuestionIndex);
+          setQuizHistory(parsed.history || []);
+          setQuizCorrectAnswersCount(parsed.quizCorrectAnswersCount || 0);
+          setCoinsEarned(parsed.coinsEarned || 0);
+          setXpEarned(parsed.xpEarned || 0);
+          return;
+        }
+      } catch (e) {
+        console.error("Failed to parse saved quiz state", e);
+      }
+    }
+    // Fallback to fresh state
+    setCurrentQuestionIndex(0);
+    setQuizHistory([]);
+    setQuizCorrectAnswersCount(0);
+    setCoinsEarned(0);
+    setXpEarned(0);
+  }, [quizMode]);
 
   // Jumble the options every time the question index or active question changes
   useEffect(() => {
@@ -195,6 +224,36 @@ export default function QuizTab({
       playSfx('wrong');
     }
 
+    const questionText = lang === 'en' ? currentQuestion.question : currentQuestion.questionKannada;
+    const correctAnswer = currentQuestion.options[currentQuestion.correctIndex];
+    const userAnswer = finalShuffledIndex !== -1 && shuffledOptions[finalShuffledIndex] 
+      ? shuffledOptions[finalShuffledIndex].text 
+      : (lang === 'en' ? "Timeout / No Answer" : "ಸಮಯ ಮೀರಿದೆ / ಉತ್ತರಿಸಿಲ್ಲ");
+
+    const newHistoryItem = {
+      stepIndex: currentQuestionIndex,
+      questionText,
+      correctAnswer,
+      userAnswer,
+      isCorrect
+    };
+
+    setQuizHistory((prev) => {
+      const updatedHistory = [...prev.filter(item => item.stepIndex !== currentQuestionIndex), newHistoryItem];
+      
+      const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+      const updatedState = {
+        currentQuestionIndex,
+        history: updatedHistory,
+        quizCorrectAnswersCount: isCorrect ? quizCorrectAnswersCount + 1 : quizCorrectAnswersCount,
+        coinsEarned: isCorrect ? coinsEarned + 15 : coinsEarned,
+        xpEarned: isCorrect ? xpEarned + 25 : xpEarned
+      };
+      localStorage.setItem(`bible_quest_quiz_progress_${userId}_${quizMode}`, JSON.stringify(updatedState));
+
+      return updatedHistory;
+    });
+
     setIsAnswerConfirmed(true);
   };
 
@@ -230,6 +289,23 @@ export default function QuizTab({
 
   const handleNextQuestion = () => {
     playSfx('click');
+    const nextIndex = currentQuestionIndex + 1;
+    const isLast = nextIndex >= questions.length;
+    const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+    
+    if (isLast) {
+      localStorage.removeItem(`bible_quest_quiz_progress_${userId}_${quizMode}`);
+    } else {
+      const updatedState = {
+        currentQuestionIndex: nextIndex,
+        history: quizHistory,
+        quizCorrectAnswersCount,
+        coinsEarned,
+        xpEarned
+      };
+      localStorage.setItem(`bible_quest_quiz_progress_${userId}_${quizMode}`, JSON.stringify(updatedState));
+    }
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
@@ -259,6 +335,42 @@ export default function QuizTab({
 
   const handleSkipQuestion = () => {
     playSfx('click');
+
+    const questionText = lang === 'en' ? currentQuestion.question : currentQuestion.questionKannada;
+    const correctAnswer = currentQuestion.options[currentQuestion.correctIndex];
+    const userAnswer = lang === 'en' ? "Skipped" : "ಸ್ಕಿಪ್ ಮಾಡಲಾಗಿದೆ";
+
+    const newHistoryItem = {
+      stepIndex: currentQuestionIndex,
+      questionText,
+      correctAnswer,
+      userAnswer,
+      isCorrect: false
+    };
+
+    setQuizHistory((prev) => {
+      const updatedHistory = [...prev.filter(item => item.stepIndex !== currentQuestionIndex), newHistoryItem];
+      
+      const nextIndex = currentQuestionIndex + 1;
+      const isLast = nextIndex >= questions.length;
+      const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+
+      if (isLast) {
+        localStorage.removeItem(`bible_quest_quiz_progress_${userId}_${quizMode}`);
+      } else {
+        const updatedState = {
+          currentQuestionIndex: nextIndex,
+          history: updatedHistory,
+          quizCorrectAnswersCount,
+          coinsEarned,
+          xpEarned
+        };
+        localStorage.setItem(`bible_quest_quiz_progress_${userId}_${quizMode}`, JSON.stringify(updatedState));
+      }
+
+      return updatedHistory;
+    });
+
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((prev) => prev + 1);
     } else {
@@ -288,6 +400,7 @@ export default function QuizTab({
     setCurrentQuestionIndex(0);
     setQuizCompleted(false);
     setQuizCorrectAnswersCount(0);
+    setQuizHistory([]);
     setCoinsEarned(0);
     setXpEarned(0);
     setSelectedShuffledIndex(null);
@@ -295,6 +408,9 @@ export default function QuizTab({
     setEliminatedShuffledIndexes([]);
     setWrongShuffledIndexes([]);
     setTimeLeft(30);
+
+    const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+    localStorage.removeItem(`bible_quest_quiz_progress_${userId}_${quizMode}`);
   };
 
   // Timer circle configurations
@@ -457,6 +573,42 @@ export default function QuizTab({
               </p>
             </div>
           </div>
+
+          {/* Respective Answers list */}
+          {quizHistory && quizHistory.length > 0 && (
+            <div className="mt-8 mb-6 text-left space-y-4 max-h-96 overflow-y-auto pr-2 border-t border-slate-150 pt-6">
+              <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                {lang === 'kn' ? "ನಿಮ್ಮ ರಸಪ್ರಶ್ನೆ ಉತ್ತರಗಳು:" : "Your Detailed Quiz Answers:"}
+              </h3>
+              <div className="space-y-3">
+                {quizHistory.map((h: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-slate-50 border border-slate-150 rounded-2xl flex flex-col gap-1.5 text-xs">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-slate-500 uppercase">
+                        {lang === 'kn' ? `ಪ್ರಶ್ನೆ ${h.stepIndex + 1}` : `Question ${h.stepIndex + 1}`}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                        h.isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {h.isCorrect ? (lang === 'kn' ? "ಸರಿ" : "Correct") : (lang === 'kn' ? "ತಪ್ಪು" : "Incorrect")}
+                      </span>
+                    </div>
+                    <p className="font-semibold text-slate-700 font-serif leading-snug">{h.questionText}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1 pt-1.5 border-t border-slate-200/50">
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">{lang === 'kn' ? "ನಿಮ್ಮ ಉತ್ತರ" : "Your Answer"}</span>
+                        <span className={`font-semibold ${h.isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>{h.userAnswer}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 font-bold block uppercase">{lang === 'kn' ? "ಸರಿಯಾದ ಉತ್ತರ" : "Correct Answer"}</span>
+                        <span className="font-semibold text-slate-700">{h.correctAnswer}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <button 

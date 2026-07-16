@@ -251,16 +251,48 @@ export default function GamesTab({
     }
   ];
 
+  // Helper to add answered questions to history and save in localStorage
+  const addAnswerToHistory = (questionText: string, correctAnswer: string, userAnswer: string, isCorrect: boolean) => {
+    setGameState((prev: any) => {
+      const filteredHistory = (prev.history || []).filter((h: any) => h.stepIndex !== prev.currentStep);
+      const newHistoryItem = {
+        stepIndex: prev.currentStep,
+        questionText,
+        correctAnswer,
+        userAnswer,
+        isCorrect
+      };
+      const nextHistory = [...filteredHistory, newHistoryItem].sort((a: any, b: any) => a.stepIndex - b.stepIndex);
+      const nextState = {
+        ...prev,
+        history: nextHistory
+      };
+      
+      const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+      if (activeGameId) {
+        localStorage.setItem(`bible_quest_game_progress_${userId}_${activeGameId}`, JSON.stringify(nextState));
+      }
+      return nextState;
+    });
+  };
+
   // Trigger game rewards payout
   const handleGameComplete = (earnedXp: number, earnedCoins: number, score: number) => {
     playSfx('victory');
-    setGameState((prev: any) => ({
-      ...prev,
-      isCompleted: true,
-      earnedXp,
-      earnedCoins,
-      score
-    }));
+    setGameState((prev: any) => {
+      const nextState = {
+        ...prev,
+        isCompleted: true,
+        earnedXp,
+        earnedCoins,
+        score
+      };
+      const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+      if (activeGameId) {
+        localStorage.setItem(`bible_quest_game_progress_${userId}_${activeGameId}`, JSON.stringify(nextState));
+      }
+      return nextState;
+    });
 
     setStats((prev) => {
       const nextXp = prev.xp + earnedXp;
@@ -277,30 +309,31 @@ export default function GamesTab({
 
   const handleResetGameSession = () => {
     playSfx('click');
-    setGameState({
+    const newState = {
       score: 0,
       currentStep: 0,
       isCompleted: false,
       earnedXp: 0,
       earnedCoins: 0,
       history: []
-    });
-    // Trigger subgame-specific state resets if necessary
-    setSubGameStates();
+    };
+    setGameState(newState);
+    
+    const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+    if (activeGameId) {
+      localStorage.removeItem(`bible_quest_game_progress_${userId}_${activeGameId}`);
+    }
+    
+    // Trigger subgame-specific state resets
+    setSubGameStates(0);
   };
 
   const handleBackToSelect = () => {
     playSfx('click');
     setActiveGameId(null);
-    setGameState({
-      score: 0,
-      currentStep: 0,
-      isCompleted: false,
-      earnedXp: 0,
-      earnedCoins: 0,
-      history: []
-    });
   };
+
+  const [lastDismissedCheckpoint, setLastDismissedCheckpoint] = useState<number>(-1);
 
   // --- SUB-GAME STATES DECLARATIONS ---
   const [charCluesShown, setCharCluesShown] = useState<number>(1);
@@ -333,7 +366,7 @@ export default function GamesTab({
   const [mapFeedback, setMapFeedback] = useState<string | null>(null);
 
   // Sync sub game initializers
-  const setSubGameStates = () => {
+  const setSubGameStates = (step = 0) => {
     // 1.
     setCharCluesShown(1);
     setCharFeedback(null);
@@ -352,7 +385,7 @@ export default function GamesTab({
     setGuessedLetters([]);
     setLivesLeft(6);
     // 6.
-    setTfIndex(0);
+    setTfIndex(step);
     setTfTimeLeft(30);
     setTfStreak(0);
     // 7.
@@ -360,15 +393,39 @@ export default function GamesTab({
     // 8.
     setOddSelected(null);
     // 9.
-    setCurrentOrder(lang === 'kn' ? [...bookOrderQuestionsKn[0].initialKn] : [...bookOrderQuestions[0].initial]);
+    const orderIndex = Math.min(step, bookOrderQuestions.length - 1);
+    setCurrentOrder(lang === 'kn' ? [...bookOrderQuestionsKn[orderIndex].initialKn] : [...bookOrderQuestions[orderIndex].initial]);
     setOrderFeedback(null);
     // 10.
     setMapFeedback(null);
   };
 
-  // Run on start and language toggle
+  // Run on start and language toggle to load or reset progress
   useEffect(() => {
-    setSubGameStates();
+    if (activeGameId) {
+      const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+      const saved = localStorage.getItem(`bible_quest_game_progress_${userId}_${activeGameId}`);
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed && typeof parsed.currentStep === 'number') {
+            setGameState(parsed);
+            setSubGameStates(parsed.currentStep);
+            return;
+          }
+        } catch (e) {}
+      }
+    }
+
+    setGameState({
+      score: 0,
+      currentStep: 0,
+      isCompleted: false,
+      earnedXp: 0,
+      earnedCoins: 0,
+      history: []
+    });
+    setSubGameStates(0);
   }, [activeGameId, lang]);
 
   // True/False countdown timer
@@ -396,6 +453,8 @@ export default function GamesTab({
     const currentQ = charFindQuestions[gameState.currentStep];
     const currentQKn = charFindQuestionsKn[gameState.currentStep];
     const isCorrect = lang === 'kn' ? (choice === currentQKn.targetKn) : (choice === currentQ.target);
+    const questionText = lang === 'kn' ? `ಯಾರು? ಸುಳಿವು: ${currentQKn.cluesKn[0]}` : `Who Am I? Clue: ${currentQ.clues[0]}`;
+    const correctAnswer = lang === 'kn' ? currentQKn.targetKn : currentQ.target;
 
     if (isCorrect) {
       playSfx('correct');
@@ -408,16 +467,22 @@ export default function GamesTab({
         : `Wrong! The correct answer was ${currentQ.target}.`
       );
     }
+    addAnswerToHistory(questionText, correctAnswer, choice, isCorrect);
   };
 
   const handleNextChar = () => {
     setCharFeedback(null);
     setCharCluesShown(1);
     if (gameState.currentStep < charFindQuestions.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setGameState((prev: any) => {
+        const nextStep = prev.currentStep + 1;
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_char_find`, JSON.stringify(nextState));
+        return nextState;
+      });
     } else {
       // Payout
-      const finalScore = gameState.score + (charFeedback?.includes("Correct") ? 1 : 0);
       const gameDef = gamesList.find(g => g.id === 'char_find')!;
       const rewardXp = Math.floor((gameState.score / charFindQuestions.length) * gameDef.xpReward);
       const rewardCoins = Math.floor((gameState.score / charFindQuestions.length) * gameDef.coinReward);
@@ -445,9 +510,18 @@ export default function GamesTab({
 
       // If all 4 matched
       if (nextMatched.length === 4) {
+        const questionText = lang === 'kn' ? `ಪದ ಹೊಂದಾಣಿಕೆ ಸುತ್ತು ${gameState.currentStep + 1}` : `Word Matching Round ${gameState.currentStep + 1}`;
+        addAnswerToHistory(questionText, "All matched", "All matched", true);
+
         if (gameState.currentStep < matchRounds.length - 1) {
           setTimeout(() => {
-            setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1, score: prev.score + 1 }));
+            setGameState((prev: any) => {
+              const nextStep = prev.currentStep + 1;
+              const nextState = { ...prev, currentStep: nextStep, score: prev.score + 1 };
+              const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+              localStorage.setItem(`bible_quest_game_progress_${userId}_word_match`, JSON.stringify(nextState));
+              return nextState;
+            });
             setMatchedTerms([]);
           }, 800);
         } else {
@@ -484,6 +558,10 @@ export default function GamesTab({
     const currentQKn = scrambleVersesKn[gameState.currentStep];
     const userString = scrambleAnswer.join(" ");
     const correctString = lang === 'kn' ? currentQKn.correctOrderKn.join(" ") : currentQ.correctOrder.join(" ");
+    const isCorrect = userString === correctString;
+
+    const questionText = lang === 'kn' ? `ವಚನ ಜೋಡಣೆ ಸುತ್ತು ${gameState.currentStep + 1}` : `Verse Scramble Round ${gameState.currentStep + 1}`;
+    addAnswerToHistory(questionText, correctString, userString || (lang === 'kn' ? "ದಾಟಿಸಲಾಗಿದೆ" : "Skipped"), isCorrect);
 
     if (userString === correctString) {
       playSfx('correct');
@@ -505,7 +583,13 @@ export default function GamesTab({
     setScrambleFeedback(null);
     setScrambleAnswer([]);
     if (gameState.currentStep < scrambleVerses.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setGameState((prev: any) => {
+        const nextStep = prev.currentStep + 1;
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_verse_scramble`, JSON.stringify(nextState));
+        return nextState;
+      });
     } else {
       const finalScore = gameState.score;
       const gameDef = gamesList.find(g => g.id === 'verse_scramble')!;
@@ -521,6 +605,8 @@ export default function GamesTab({
     const currentQ = riddles[gameState.currentStep];
     const currentQKn = riddlesKn[gameState.currentStep];
     const isCorrect = lang === 'kn' ? (choice === currentQKn.answerKn) : (choice === currentQ.answer);
+    const questionText = lang === 'kn' ? currentQKn.riddleKn : currentQ.riddle;
+    const correctAnswer = lang === 'kn' ? currentQKn.answerKn : currentQ.answer;
 
     if (isCorrect) {
       playSfx('correct');
@@ -533,12 +619,19 @@ export default function GamesTab({
         : `Incorrect! This was ${currentQ.answer}.`
       );
     }
+    addAnswerToHistory(questionText, correctAnswer, choice, isCorrect);
   };
 
   const handleNextRiddle = () => {
     setRiddleFeedback(null);
     if (gameState.currentStep < riddles.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setGameState((prev: any) => {
+        const nextStep = prev.currentStep + 1;
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_who_am_i`, JSON.stringify(nextState));
+        return nextState;
+      });
     } else {
       const finalScore = gameState.score;
       const gameDef = gamesList.find(g => g.id === 'who_am_i')!;
@@ -562,6 +655,12 @@ export default function GamesTab({
       playSfx('wrong');
       if (nextLives <= 0) {
         // Lost
+        addAnswerToHistory(
+          lang === 'kn' ? `ಪದ ಊಹೆ: ${currentGuessWord}` : `Word Guess: ${currentGuessWord}`,
+          currentGuessWord,
+          guessedLetters.join(""),
+          false
+        );
         const gameDef = gamesList.find(g => g.id === 'word_guess')!;
         handleGameComplete(10, 5, 0);
       }
@@ -569,6 +668,12 @@ export default function GamesTab({
       // Check if word solved
       const isWordSolved = currentGuessWord.split("").every(char => nextGuessed.includes(char));
       if (isWordSolved) {
+        addAnswerToHistory(
+          lang === 'kn' ? `ಪದ ಊಹೆ: ${currentGuessWord}` : `Word Guess: ${currentGuessWord}`,
+          currentGuessWord,
+          currentGuessWord,
+          true
+        );
         const gameDef = gamesList.find(g => g.id === 'word_guess')!;
         handleGameComplete(gameDef.xpReward, gameDef.coinReward, 1);
       }
@@ -578,7 +683,18 @@ export default function GamesTab({
   // 6. True or False action
   const handleTfAnswer = (userAns: boolean) => {
     const currentQ = tfQuestions[tfIndex];
-    if (currentQ.a === userAns) {
+    const currentQKn = tfQuestionsKn[tfIndex];
+    const questionText = lang === 'kn' ? currentQKn.qKn : currentQ.q;
+    const isCorrect = currentQ.a === userAns;
+
+    addAnswerToHistory(
+      questionText,
+      currentQ.a ? (lang === 'kn' ? "ಸರಿ" : "True") : (lang === 'kn' ? "ತಪ್ಪು" : "False"),
+      userAns ? (lang === 'kn' ? "ಸರಿ" : "True") : (lang === 'kn' ? "ತಪ್ಪು" : "False"),
+      isCorrect
+    );
+
+    if (isCorrect) {
       playSfx('correct');
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
       setTfStreak((prev) => prev + 1);
@@ -588,7 +704,16 @@ export default function GamesTab({
     }
 
     if (tfIndex < tfQuestions.length - 1) {
-      setTfIndex((prev) => prev + 1);
+      setTfIndex((prev) => {
+        const nextTf = prev + 1;
+        setGameState((g: any) => {
+          const nextState = { ...g, currentStep: nextTf };
+          const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+          localStorage.setItem(`bible_quest_game_progress_${userId}_true_false`, JSON.stringify(nextState));
+          return nextState;
+        });
+        return nextTf;
+      });
     } else {
       // Completed early
       const gameDef = gamesList.find(g => g.id === 'true_false')!;
@@ -604,6 +729,9 @@ export default function GamesTab({
     const currentQ = blanksQuestions[gameState.currentStep];
     const currentQKn = blanksQuestionsKn[gameState.currentStep];
     const isCorrect = lang === 'kn' ? (choice === currentQKn.missingKn) : (choice === currentQ.missing);
+    const questionText = lang === 'kn' ? currentQKn.sentenceKn : currentQ.sentence;
+    const correctAnswer = lang === 'kn' ? currentQKn.missingKn : currentQ.missing;
+
     if (isCorrect) {
       playSfx('correct');
       setBlanksFeedback(lang === 'kn' ? "ಅದ್ಭುತ! ಸರಿಯಾದ ಪದ ಆಯ್ಕೆ." : "Superb! Correct word choice.");
@@ -615,12 +743,19 @@ export default function GamesTab({
         : `Incorrect. The correct word is: ${currentQ.missing}`
       );
     }
+    addAnswerToHistory(questionText, correctAnswer, choice, isCorrect);
   };
 
   const handleNextBlanks = () => {
     setBlanksFeedback(null);
     if (gameState.currentStep < blanksQuestions.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setGameState((prev: any) => {
+        const nextStep = prev.currentStep + 1;
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_fill_blanks`, JSON.stringify(nextState));
+        return nextState;
+      });
     } else {
       const finalScore = gameState.score;
       const gameDef = gamesList.find(g => g.id === 'fill_blanks')!;
@@ -637,18 +772,28 @@ export default function GamesTab({
     const currentQKn = oddOneQuestionsKn[gameState.currentStep];
     setOddSelected(item);
     const isCorrect = lang === 'kn' ? (item === currentQKn.oddKn) : (item === currentQ.odd);
+    const questionText = lang === 'kn' ? `ಗುಂಪಿಗೆ ಸೇರದ ಪದ ಯಾವುದು? (${currentQKn.itemsKn.join(", ")})` : `Which is the odd one out? (${currentQ.items.join(", ")})`;
+    const correctAnswer = lang === 'kn' ? currentQKn.oddKn : currentQ.odd;
+
     if (isCorrect) {
       playSfx('correct');
       setGameState((prev: any) => ({ ...prev, score: prev.score + 1 }));
     } else {
       playSfx('wrong');
     }
+    addAnswerToHistory(questionText, correctAnswer, item, isCorrect);
   };
 
   const handleNextOdd = () => {
     setOddSelected(null);
     if (gameState.currentStep < oddOneQuestions.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setGameState((prev: any) => {
+        const nextStep = prev.currentStep + 1;
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_odd_one`, JSON.stringify(nextState));
+        return nextState;
+      });
     } else {
       const finalScore = gameState.score;
       const gameDef = gamesList.find(g => g.id === 'odd_one')!;
@@ -678,6 +823,11 @@ export default function GamesTab({
     const correctArr = bookOrderQuestions[gameState.currentStep].correct;
     const correctArrKn = bookOrderQuestionsKn[gameState.currentStep].correctKn;
     const isCorrect = currentOrder.every((val, idx) => val === (lang === 'kn' ? correctArrKn[idx] : correctArr[idx]));
+    
+    const questionText = lang === 'kn' ? `ಬೈಬಲ್ ಪುಸ್ತಕಗಳ ಅನುಕ್ರಮ ಸುತ್ತು ${gameState.currentStep + 1}` : `Bible Book Order Round ${gameState.currentStep + 1}`;
+    const correctAnswer = lang === 'kn' ? correctArrKn.join(" → ") : correctArr.join(" → ");
+    const userAnswer = currentOrder.join(" → ");
+
     if (isCorrect) {
       playSfx('correct');
       setOrderFeedback(lang === 'kn' ? "ಅತ್ಯುತ್ತಮ! ನೀವು ಪುಸ್ತಕಗಳನ್ನು ಸರಿಯಾದ ಅನುಕ್ರಮದಲ್ಲಿ ಜೋಡಿಸಿದ್ದೀರಿ." : "Exquisite! You ordered the books in correct sequence.");
@@ -689,13 +839,19 @@ export default function GamesTab({
         : `Incorrect order. The actual sequence is: ${correctArr.join(" → ")}`
       );
     }
+    addAnswerToHistory(questionText, correctAnswer, userAnswer, isCorrect);
   };
 
   const handleNextOrder = () => {
     setOrderFeedback(null);
     if (gameState.currentStep < bookOrderQuestions.length - 1) {
       const nextStep = gameState.currentStep + 1;
-      setGameState((prev: any) => ({ ...prev, currentStep: nextStep }));
+      setGameState((prev: any) => {
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_book_order`, JSON.stringify(nextState));
+        return nextState;
+      });
       setCurrentOrder(lang === 'kn' ? [...bookOrderQuestionsKn[nextStep].initialKn] : [...bookOrderQuestions[nextStep].initial]);
     } else {
       const finalScore = gameState.score;
@@ -712,6 +868,9 @@ export default function GamesTab({
     const currentQ = mapLandmarksQuestions[gameState.currentStep];
     const currentQKn = mapLandmarksQuestionsKn[gameState.currentStep];
     const isCorrect = lang === 'kn' ? (choice === currentQKn.answerKn) : (choice === currentQ.answer);
+    const questionText = lang === 'kn' ? currentQKn.landmarkKn : currentQ.landmark;
+    const correctAnswer = lang === 'kn' ? currentQKn.answerKn : currentQ.answer;
+
     if (isCorrect) {
       playSfx('correct');
       setMapFeedback(lang === 'kn' ? "ಪರಿಪೂರ್ಣ ಭೌಗೋಳಿಕ ಹೊಂದಾಣಿಕೆ! ಮುಂದುವರಿಯಿರಿ." : "A perfect geographical match! Keep it up.");
@@ -723,12 +882,19 @@ export default function GamesTab({
         : `Incorrect. That landmark historical event belongs in: ${currentQ.answer}`
       );
     }
+    addAnswerToHistory(questionText, correctAnswer, choice, isCorrect);
   };
 
   const handleNextMap = () => {
     setMapFeedback(null);
     if (gameState.currentStep < mapLandmarksQuestions.length - 1) {
-      setGameState((prev: any) => ({ ...prev, currentStep: prev.currentStep + 1 }));
+      setGameState((prev: any) => {
+        const nextStep = prev.currentStep + 1;
+        const nextState = { ...prev, currentStep: nextStep };
+        const userId = localStorage.getItem('bible_quest_current_user_id') || 'default_user';
+        localStorage.setItem(`bible_quest_game_progress_${userId}_map_landmarks`, JSON.stringify(nextState));
+        return nextState;
+      });
     } else {
       const finalScore = gameState.score;
       const gameDef = gamesList.find(g => g.id === 'map_landmarks')!;
@@ -920,6 +1086,42 @@ export default function GamesTab({
                 </div>
               </div>
 
+              {/* Respective Answers list */}
+              {gameState.history && gameState.history.length > 0 && (
+                <div className="mt-8 mb-6 text-left space-y-4 max-h-96 overflow-y-auto pr-2 border-t border-slate-100 pt-6">
+                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    {lang === 'kn' ? "ನಿಮ್ಮ ವಿವರವಾದ ಉತ್ತರಗಳು:" : "Your Step-by-Step Answers:"}
+                  </h3>
+                  <div className="space-y-3">
+                    {gameState.history.map((h: any, idx: number) => (
+                      <div key={idx} className="p-4 bg-slate-50 border border-slate-150 rounded-2xl flex flex-col gap-1.5 text-xs">
+                        <div className="flex items-center justify-between">
+                          <span className="font-bold text-slate-500 uppercase">
+                            {lang === 'kn' ? `ಹಂತ ${h.stepIndex + 1}` : `Step ${h.stepIndex + 1}`}
+                          </span>
+                          <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                            h.isCorrect ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'
+                          }`}>
+                            {h.isCorrect ? (lang === 'kn' ? "ಸರಿ" : "Correct") : (lang === 'kn' ? "ತಪ್ಪು" : "Incorrect")}
+                          </span>
+                        </div>
+                        <p className="font-semibold text-slate-700 font-serif leading-snug">{h.questionText}</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1 pt-1.5 border-t border-slate-200/50">
+                          <div>
+                            <span className="text-[10px] text-slate-400 font-bold block uppercase">{lang === 'kn' ? "ನಿಮ್ಮ ಉತ್ತರ" : "Your Answer"}</span>
+                            <span className={`font-semibold ${h.isCorrect ? 'text-emerald-700' : 'text-red-700'}`}>{h.userAnswer}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] text-slate-400 font-bold block uppercase">{lang === 'kn' ? "ಸರಿಯಾದ ಉತ್ತರ" : "Correct Answer"}</span>
+                            <span className="font-semibold text-slate-700">{h.correctAnswer}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
                 <button 
                   onClick={handleResetGameSession}
@@ -938,8 +1140,63 @@ export default function GamesTab({
           )}
 
 
+          {/* Checkpoint Screen */}
+          {gameState.currentStep % 5 === 0 && 
+           gameState.currentStep > 0 && 
+           lastDismissedCheckpoint !== gameState.currentStep &&
+           !gameState.isCompleted && (
+            <div className="bg-white rounded-[32px] p-8 text-center border-2 border-dashed border-primary/20 shadow-xl max-w-xl mx-auto w-full animate-fade-in my-6">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center text-primary mx-auto mb-4 animate-pulse">
+                <Shield className="w-8 h-8" />
+              </div>
+              <h2 className="font-serif text-2xl font-bold text-primary">
+                {lang === 'kn' ? "ಚೆಕ್‌ಪಾಯಿಂಟ್ ತಲುಪಿದೆ!" : "Checkpoint Reached!"}
+              </h2>
+              <p className="text-xs text-slate-500 font-semibold mt-2 leading-relaxed">
+                {lang === 'kn' 
+                  ? `ನೀವು ಯಶಸ್ವಿಯಾಗಿ ${gameState.currentStep} ಹಂತಗಳನ್ನು ಪೂರ್ಣಗೊಳಿಸಿದ್ದೀರಿ. ನಿಮ್ಮ ಪ್ರಗತಿಯನ್ನು ಉಳಿಸಲಾಗಿದೆ. ನೀವು ಈಗ ವಿರಾಮ ತೆಗೆದುಕೊಳ್ಳಬಹುದು ಮತ್ತು ನಂತರ ಹಂತ ${gameState.currentStep + 1} ರಿಂದ ಮುಂದುವರಿಯಬಹುದು!` 
+                  : `You have successfully completed ${gameState.currentStep} steps. Your progress has been securely saved. You can take a break now and resume from Step ${gameState.currentStep + 1} whenever you return!`}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-4 my-6 bg-slate-50 p-4 rounded-2xl border border-slate-100 text-xs">
+                <div className="text-center">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    {lang === 'kn' ? "ಪೂರ್ಣಗೊಂಡ ಹಂತಗಳು" : "Steps Completed"}
+                  </p>
+                  <p className="text-lg font-bold text-primary">{gameState.currentStep}</p>
+                </div>
+                <div className="text-center border-l border-slate-200">
+                  <p className="text-[10px] font-bold text-slate-400 uppercase">
+                    {lang === 'kn' ? "ಪ್ರಸ್ತುತ ಸ್ಕೋರ್" : "Current Score"}
+                  </p>
+                  <p className="text-lg font-bold text-emerald-600">{gameState.score}</p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-center gap-3 justify-center">
+                <button 
+                  onClick={() => {
+                    playSfx('click');
+                    setLastDismissedCheckpoint(gameState.currentStep);
+                  }}
+                  className="w-full sm:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Zap className="w-4 h-4 fill-white text-white" />
+                  {lang === 'kn' ? `ಹಂತ ${gameState.currentStep + 1} ಕ್ಕೆ ಮುಂದುವರಿಯಿರಿ` : `Continue to Step ${gameState.currentStep + 1}`}
+                </button>
+                <button 
+                  onClick={handleBackToSelect}
+                  className="w-full sm:w-auto px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl cursor-pointer"
+                >
+                  {lang === 'kn' ? "ಆಟಗಳ ಪಟ್ಟಿಗೆ ಹಿಂತಿರುಗಿ" : "Back to Games"}
+                </button>
+              </div>
+            </div>
+          )}
+
+
           {/* 5. INDIVIDUAL RENDERS FOR EACH OF THE 10 GAME MODES */}
-          {!gameState.isCompleted && (
+          {!gameState.isCompleted && !(gameState.currentStep % 5 === 0 && gameState.currentStep > 0 && lastDismissedCheckpoint !== gameState.currentStep) && (
             <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-200 shadow-md">
               
               {/* GAME 1: Character Finding */}
